@@ -416,6 +416,110 @@ TypeScript具有`ReadonlyArray<T>`类型
 
 ### 函数
 
+`函数类型`
+
+为函数定义类型
+> 定义`参数类型`和`返回值`类型
+```javascript
+    function add(x: number, y: number): number {
+        return x + y;
+    }
+
+    let myAdd = function(x: number, y: number): number { return x + y; };
+
+    let myAdd: (baseValue: number, increment: number) => number =
+    function(x: number, y: number): number { return x + y; };
+```
+
+`可选参数和默认参数`
+
+```javascript
+    // 可选
+    function buildName(firstName: string, lastName?: string) {
+        // ...
+    }
+    // 默认 默认参数只有传递undefined的时候才会生效
+    function buildName(firstName: string, lastName = "Smith") {
+        // ...
+    }
+```
+
+`剩余参数`
+
+```javascript
+    function buildName(firstName: string, ...restOfName: string[]) {
+        return firstName + " " + restOfName.join(" ");
+    }
+
+    let buildNameFun: (fname: string, ...rest: string[]) => string = buildName;
+```
+
+`this参数`
+> 可能不是很常用，需要的时候去官网查看就可以
+```javascript
+    interface Card {
+        suit: string;
+        card: number;
+    }
+    interface Deck {
+        suits: string[];
+        cards: number[];
+        createCardPicker(this: Deck): () => Card;
+    }
+    let deck: Deck = {
+        suits: ["hearts", "spades", "clubs", "diamonds"],
+        cards: Array(52),
+        // NOTE: The function now explicitly specifies that its callee must be of type Deck
+        createCardPicker: function(this: Deck) {
+            return () => {
+                let pickedCard = Math.floor(Math.random() * 52);
+                let pickedSuit = Math.floor(pickedCard / 13);
+
+                return {suit: this.suits[pickedSuit], card: pickedCard % 13};
+            }
+        }
+    }
+
+    let cardPicker = deck.createCardPicker();
+    let pickedCard = cardPicker();
+
+    alert("card: " + pickedCard.card + " of " + pickedCard.suit);
+```
+
+`重载`
+
+> 为了让编译器能够选择正确的检查类型，它与JavaScript里的处理流程相似。 它查找重载列表，尝试使用第一个重载定义。 如果匹配的话就使用这个。 因此，在定义重载的时候，一定要把最精确的定义放在最前面
+
+```javascript
+    let suits = ["hearts", "spades", "clubs", "diamonds"];
+
+    function pickCard(x: {suit: string; card: number; }[]): number;
+    function pickCard(x: number): {suit: string; card: number; };
+    function pickCard(x): any {
+        // Check to see if we're working with an object/array
+        // if so, they gave us the deck and we'll pick the card
+        if (typeof x == "object") {
+            let pickedCard = Math.floor(Math.random() * x.length);
+            return pickedCard;
+        }
+        // Otherwise just let them pick the card
+        else if (typeof x == "number") {
+            let pickedSuit = Math.floor(x / 13);
+            return { suit: suits[pickedSuit], card: x % 13 };
+        }
+    }
+
+    let myDeck = [{ suit: "diamonds", card: 2 }, { suit: "spades", card: 10 }, { suit: "hearts", card: 4 }];
+    let pickedCard1 = myDeck[pickCard(myDeck)];
+    alert("card: " + pickedCard1.card + " of " + pickedCard1.suit);
+
+    let pickedCard2 = pickCard(15);
+    alert("card: " + pickedCard2.card + " of " + pickedCard2.suit);
+```
+
+
+
+
 
 
 
