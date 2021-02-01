@@ -764,6 +764,10 @@ TypeScript具有`ReadonlyArray<T>`类型
     let directions = [Directions.Up, Directions.Down, Directions.Left, Directions.Right]
 ```
 
+### 高级类型
+
+
+
 
 
 
