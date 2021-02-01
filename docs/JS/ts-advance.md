@@ -517,6 +517,252 @@ TypeScript具有`ReadonlyArray<T>`类型
     alert("card: " + pickedCard2.card + " of " + pickedCard2.suit);
 ```
 
+### 泛型
+
+> 使用`泛型`来创建可重用的组件，一个组件可以支持多种类型的数据。 这样用户就可以以自己的数据类型来使用组件
+
+```javascript
+    // 定义函数传递的参数和返回值类型一致
+    function identity<T>(arg: T): T {
+        return arg;
+    }
+
+    // 泛型的使用
+
+    // 第一种
+
+    let output = identity<string>("myString");  // type of output will be 'string'
+
+    // 第二种 利用类型推论
+
+    let output = identity("myString");  // type of output will be 'string'
+
+```
+
+`使用泛型变量`
+
+```javascript
+    function loggingIdentity<T>(arg: Array<T>): Array<T> {
+        // 如果arg不声明为数组是不可以直接调用.length的，因为T的类型是任意的
+        console.log(arg.length);  // Array has a .length, so no more error
+        return arg;
+    }
+```
+
+`泛型类型`
+
+```javascript
+   function identity<T>(arg: T): T {
+        return arg;
+    }
+
+    let myIdentity: <T>(arg: T) => T = identity; 
+
+    // 或者
+    interface GenericIdentityFn {
+        <T>(arg: T): T;
+    }
+
+    function identity<T>(arg: T): T {
+        return arg;
+    }
+
+    let myIdentity: GenericIdentityFn = identity;
+
+    // 接口定义泛型
+
+    interface GenericIdentityFn<T> {
+        (arg: T): T;
+    }
+
+    function identity<T>(arg: T): T {
+        return arg;
+    }
+
+    let myIdentity: GenericIdentityFn<number> = identity;
+
+```
+
+`泛型类`
+
+```javascript
+    class GenericNumber<T> {
+        zeroValue: T;
+        add: (x: T, y: T) => T;
+    }
+
+    let myGenericNumber = new GenericNumber<number>();
+    myGenericNumber.zeroValue = 0;
+    myGenericNumber.add = function(x, y) { return x + y; };
+```
+
+`泛型约束`
+
+```javascript
+
+    interface Lengthwise {
+        length: number;
+    }
+
+    function loggingIdentity<T extends Lengthwise>(arg: T): T {
+        console.log(arg.length);  // Now we know it has a .length property, so no more error
+        return arg;
+    }
+```
+
+`在泛型里使用类类型`
+
+```javascript
+    class BeeKeeper {
+        hasMask: boolean;
+    }
+
+    class ZooKeeper {
+        nametag: string;
+    }
+
+    class Animal {
+        numLegs: number;
+    }
+
+    class Bee extends Animal {
+        keeper: BeeKeeper;
+    }
+
+    class Lion extends Animal {
+        keeper: ZooKeeper;
+    }
+
+    function createInstance<A extends Animal>(c: new () => A): A {
+        // 传递的参数c实例化的时候返回A类型
+        return new c();
+    }
+
+    createInstance(Lion).keeper.nametag;  // typechecks!
+    createInstance(Bee).keeper.hasMask;   // typechecks!
+```
+
+### 枚举
+
+`数字枚举`
+
+> 如果Up不指定值的时候，将默认为0，下面也是依次递增
+```javascript
+    enum Direction {
+        Up = 1,
+        Down,  // 2
+        Left,  // 3
+        Right  // 4  自动增长
+    }
+
+    // 使用
+    enum Response {
+        No = 0,
+        Yes = 1,
+    }
+
+    function respond(recipient: string, message: Response): void {
+        // ...
+    }
+
+    respond("Princess Caroline", Response.Yes)
+```
+
+`字符串枚举`
+
+```javascript
+    enum Direction {
+        Up = "UP",
+        Down = "DOWN",
+        Left = "LEFT",
+        Right = "RIGHT",
+    }
+```
+
+`异构枚举（Heterogeneous enums）`
+
+```javascript
+    enum BooleanLikeHeterogeneousEnum {
+        No = 0,
+        Yes = "YES",
+    }
+```
+
+`联合枚举与枚举成员的类型`
+
+```javascript
+    enum ShapeKind {
+        Circle,
+        Square,
+    }
+
+    interface Circle {
+        kind: ShapeKind.Circle;
+        radius: number;
+    }
+
+    interface Square {
+        kind: ShapeKind.Square;
+        sideLength: number;
+    }
+
+    let c: Circle = {
+        kind: ShapeKind.Square, // 必须是ShapeKind.Circle
+        //    ~~~~~~~~~~~~~~~~ Error!
+        radius: 100,
+    }
+
+```
+
+`运行时的枚举`
+
+```javascript
+    enum E {
+        X, Y, Z
+    }
+
+    function f(obj: { X: number }) {
+        return obj.X;
+    }
+
+    // Works, since 'E' has a property named 'X' which is a number.
+    f(E);
+```
+
+`反向映射`
+
+```javascript
+    enum Enum {
+        A
+    }
+    let a = Enum.A;
+    let nameOfA = Enum[a]; // "A"
+```
+
+上面的代码编译为JS
+> 注：不会为字符串枚举成员生成反向映射。
+
+```javascript
+    var Enum;
+    (function (Enum) {
+        Enum[Enum["A"] = 0] = "A";
+    })(Enum || (Enum = {}));
+    var a = Enum.A;
+    var nameOfA = Enum[a]; // "A"
+```
+
+`const枚举`
+
+```javascript
+    const enum Directions {
+        Up,
+        Down,
+        Left,
+        Right
+    }
+
+    let directions = [Directions.Up, Directions.Down, Directions.Left, Directions.Right]
+```
 
 
 
