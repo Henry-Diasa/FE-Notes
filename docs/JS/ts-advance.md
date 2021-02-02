@@ -766,6 +766,511 @@ TypeScript具有`ReadonlyArray<T>`类型
 
 ### 高级类型
 
+#### 交叉类型（Intersection Types）
+> 交叉类型是将`多个类型`合并为`一个类型`。 这让我们可以把现有的多种类型叠加到一起成为一种类型，它包含了所需的`所有类型的特性`
+
+```javascript
+    function extend<T, U>(first: T, second: U): T & U {
+         // 断言
+        let result = <T & U>{};
+        for (let id in first) {
+            (<any>result)[id] = (<any>first)[id];
+        }
+        for (let id in second) {
+            if (!result.hasOwnProperty(id)) {
+                (<any>result)[id] = (<any>second)[id];
+            }
+        }
+        return result;
+    }
+
+    class Person {
+        constructor(public name: string) { }
+    }
+    interface Loggable {
+        log(): void;
+    }
+    class ConsoleLogger implements Loggable {
+        log() {
+            // ...
+        }
+    }
+    var jim = extend(new Person("Jim"), new ConsoleLogger());
+    var n = jim.name;
+    jim.log();
+```
+
+#### 联合类型（Union Types）
+
+> 联合类型与交叉类型很有关联，但是使用上却完全不同。 偶尔你会遇到这种情况，一个代码库希望传入 `number`或 `string`类型的参数
+
+```javascript
+
+// 这样是存在问题的，因为padding传递一个不是string和number类型的时候，编译阶段并不会报错。执行的时候会抛出异常
+function padLeft(value: string, padding: any) {
+    if (typeof padding === "number") {
+        return Array(padding + 1).join(" ") + value;
+    }
+    if (typeof padding === "string") {
+        return padding + value;
+    }
+    throw new Error(`Expected string or number, got '${padding}'.`);
+}
+
+// 联合类型转换后
+
+function padLeft(value: string, padding: string | number) {
+    // ...
+}
+padLeft("Hello world", 4); // returns "    Hello world"
+```
+
+如果一个值是`联合类型`，我们只能访问此联合类型的所有类型里`共有的`成员。
+
+```javascript
+    interface Bird {
+        fly();
+        layEggs();
+    }
+
+    interface Fish {
+        swim();
+        layEggs();
+    }
+
+    function getSmallPet(): Fish | Bird {
+        // ...
+    }
+
+    let pet = getSmallPet();
+    pet.layEggs(); // okay
+    pet.swim();    // errors
+```
+
+#### 类型保护与区分类型（Type Guards and Differentiating Types）
+
+```javascript
+    let pet = getSmallPet();
+
+    // 每一个成员访问都会报错
+    if (pet.swim) {
+        pet.swim();
+    }
+    else if (pet.fly) {
+        pet.fly();
+    }
+```
+
+类型断言
+
+```javascript
+    let pet = getSmallPet();
+
+    if ((<Fish>pet).swim) {
+        (<Fish>pet).swim();
+    }
+    else {
+        (<Bird>pet).fly();
+    }
+```
+
+`用户自定义的类型保护`
+
+- 类型谓词
+
+```javascript
+    // pet is Fish 就是类型谓词
+    function isFish(pet: Fish | Bird): pet is Fish {
+        return (<Fish>pet).swim !== undefined;
+    }
+
+    // 使用 'swim' 和 'fly' 调用都没有问题了
+
+    if (isFish(pet)) {
+        pet.swim();
+    }
+    else {
+        pet.fly();
+    }
+
+```
+
+- `typeof` 类型保护
+
+```javascript
+    function padLeft(value: string, padding: string | number) {
+        if (typeof padding === "number") {
+            return Array(padding + 1).join(" ") + value;
+        }
+        if (typeof padding === "string") {
+            return padding + value;
+        }
+        throw new Error(`Expected string or number, got '${padding}'.`);
+    }
+```
+
+- `instanceof` 类型保护
+
+```javascript
+    interface Padder {
+        getPaddingString(): string
+    }
+
+    class SpaceRepeatingPadder implements Padder {
+        constructor(private numSpaces: number) { }
+        getPaddingString() {
+            return Array(this.numSpaces + 1).join(" ");
+        }
+    }
+
+    class StringPadder implements Padder {
+        constructor(private value: string) { }
+        getPaddingString() {
+            return this.value;
+        }
+    }
+
+    function getRandomPadder() {
+        return Math.random() < 0.5 ?
+            new SpaceRepeatingPadder(4) :
+            new StringPadder("  ");
+    }
+
+    // 类型为SpaceRepeatingPadder | StringPadder
+    let padder: Padder = getRandomPadder();
+
+    if (padder instanceof SpaceRepeatingPadder) {
+        padder; // 类型细化为'SpaceRepeatingPadder'
+    }
+    if (padder instanceof StringPadder) {
+        padder; // 类型细化为'StringPadder'
+    }
+```
+
+#### 可以为null的类型
+
+> 当使用`--strictNullChecks`标记的时候，声明一个变量，它不会自动的包含`null`或者`undefined`。需要使用联合类型明确的包含他们
+
+```javascript
+    let s = "foo";
+    s = null; // 错误, 'null'不能赋值给'string'
+    let sn: string | null = "bar";
+    sn = null; // 可以
+
+    sn = undefined; // error, 'undefined'不能赋值给'string | null'
+```
+
+`可选参数和可选属性`
+> 使用了 `--strictNullChecks`，可选参数和可选属性会被自动地加上 `| undefined`:
+
+```javascript
+    function f(x: number, y?: number) {
+        return x + (y || 0);
+    }
+    f(1, 2);
+    f(1);
+    f(1, undefined);
+    f(1, null); // error, 'null' is not assignable to 'number | undefined'
+```
+
+```javascript
+    class C {
+        a: number;
+        b?: number;
+    }
+    let c = new C();
+    c.a = 12;
+    c.a = undefined; // error, 'undefined' is not assignable to 'number'
+    c.b = 13;
+    c.b = undefined; // ok
+    c.b = null; // error, 'null' is not assignable to 'number | undefined'
+```
+
+`类型保护和类型断言`
+> 由于可以为null的类型是通过联合类型实现，那么你需要使用类型保护来去除 null
+
+```javascript
+    function f(sn: string | null): string {
+        if (sn == null) {
+            return "default";
+        }
+        else {
+            return sn;
+        }
+        // 或者通过短路运算符
+        return sn || "default";
+    }
+```
+
+`! 断言`
+
+```javascript
+   function broken(name: string | null): string {
+    function postfix(epithet: string) {
+        return name.charAt(0) + '.  the ' + epithet; // error, 'name' is possibly null
+    }
+    name = name || "Bob";
+    return postfix("great");
+    }
+
+    function fixed(name: string | null): string {
+    function postfix(epithet: string) {
+        // 这里使用 ！来断言name是一定存在的
+        return name!.charAt(0) + '.  the ' + epithet; // ok
+    }
+    name = name || "Bob";
+    return postfix("great");
+    } 
+```
+
+#### 类型别名
+
+> 类型别名会给一个类型起个新名字。 类型别名有时和接口很像，但是可以作用于原始值，联合类型，元组以及其它任何你需要手写的类型。
+
+```javascript
+    type Name = string;
+    type NameResolver = () => string;
+    type NameOrResolver = Name | NameResolver;
+    function getName(n: NameOrResolver): Name {
+        if (typeof n === 'string') {
+            return n;
+        }
+        else {
+            return n();
+        }
+    }
+```
+类型别名也可以是泛型
+
+```javascript
+    type Tree<T> = {
+        value: T;
+        left: Tree<T>;
+        right: Tree<T>;
+    }
+```
+
+类型别名不能出现在声明右侧的任何地方
+
+```javascript
+    type Yikes = Array<Yikes>; // error
+```
+
+`接口 vs 类型别名`
+
+- 接口创建了一个`新的名字`，可以在其它任何地方使用。 类型别名并`不创建新名字`—比如，错误信息就不会使用别名
+
+```javascript
+    // 在编译器中将鼠标悬停在 interfaced上，显示它返回的是 Interface，但悬停在 aliased上时，显示的却是对象字面量类型。
+    type Alias = { num: number }
+    interface Interface {
+        num: number;
+    }
+    declare function aliased(arg: Alias): Alias;
+    declare function interfaced(arg: Interface): Interface;
+```
+- 另一个重要区别是`类型别名`不能被 `extends`和 `implements`（自己也不能 `extends`和 `implements`其它类型）
+
+- 如果你无法通过接口来描述一个类型并且需要使用`联合类型`或`元组类型`，这时通常会使用`类型别名`。
+
+#### 字符串字面量类型
+
+```javascript
+   type Easing = "ease-in" | "ease-out" | "ease-in-out";
+    class UIElement {
+        animate(dx: number, dy: number, easing: Easing) {
+            if (easing === "ease-in") {
+                // ...
+            }
+            else if (easing === "ease-out") {
+            }
+            else if (easing === "ease-in-out") {
+            }
+            else {
+                // error! should not pass null or undefined.
+            }
+        }
+    }
+
+    let button = new UIElement();
+    button.animate(0, 0, "ease-in");
+    button.animate(0, 0, "uneasy"); // error: "uneasy" is not allowed here 
+```
+字符串字面量类型还可以用于区分函数重载：
+
+```javascript
+    function createElement(tagName: "img"): HTMLImageElement;
+    function createElement(tagName: "input"): HTMLInputElement;
+    // ... more overloads ...
+    function createElement(tagName: string): Element {
+        // ... code goes here ...
+    }
+```
+
+#### 数字字面量类型
+
+```javascript
+    function rollDie(): 1 | 2 | 3 | 4 | 5 | 6 {
+        // ...
+    }
+```
+
+#### 可辨识联合（Discriminated Unions）
+
+```javascript
+    interface Square {
+        kind: "square";
+        size: number;
+    }
+    interface Rectangle {
+        kind: "rectangle";
+        width: number;
+        height: number;
+    }
+    interface Circle {
+        kind: "circle";
+        radius: number;
+    }
+    type Shape = Square | Rectangle | Circle;
+    function area(s: Shape) {
+        switch (s.kind) {
+            case "square": return s.size * s.size;
+            case "rectangle": return s.height * s.width;
+            case "circle": return Math.PI * s.radius ** 2;
+        }
+    }
+```
+
+#### 多态的 `this`类型
+
+```javascript
+    class BasicCalculator {
+        public constructor(protected value: number = 0) { }
+        public currentValue(): number {
+            return this.value;
+        }
+        public add(operand: number): this {
+            this.value += operand;
+            return this;
+        }
+        public multiply(operand: number): this {
+            this.value *= operand;
+            return this;
+        }
+        // ... other operations go here ...
+    }
+
+    let v = new BasicCalculator(2)
+                .multiply(5)
+                .add(1)
+                .currentValue();
+```
+#### 索引类型（Index types）
+> 下面是如何在TypeScript里使用获取对象`key`相对应的`value`值，通过 `索引类型查询`和 `索引访问`操作符：
+
+```javascript
+    // keyof 获取T类型的 已知的 公共属性名的联合
+    function pluck<T, K extends keyof T>(o: T, names: K[]): T[K][] {
+        return names.map(n => o[n]);
+    }
+
+    interface Person {
+        name: string;
+        age: number;
+    }
+    let person: Person = {
+        name: 'Jarid',
+        age: 35
+    };
+    let strings: string[] = pluck(person, ['name']); // ok, string[]
+
+    let personProps: keyof Person; // 'name' | 'age'
+```
+
+`T[K]`索引访问操作符。
+
+#### 映射类型
+
+> TypeScript提供了从旧类型中创建新类型的一种方式
+```javascript
+    type Readonly<T> = {
+        readonly [P in keyof T]: T[P];
+    }
+    type Partial<T> = {
+        [P in keyof T]?: T[P];
+    }
+    // 使用
+    type PersonPartial = Partial<Person>;
+    type ReadonlyPerson = Readonly<Person>;
+```
+
+#### Record<Keys,Type>
+> Constructs an object type whose property keys are `Keys `and whose property values are `Type`. This utility can be used to map the properties of a type to another type.
+
+```javascript
+    interface PageInfo {
+        title: string;
+    }
+
+    type Page = "home" | "about" | "contact";
+
+    const nav: Record<Page, PageInfo> = {
+    about: { title: "about" },
+    contact: { title: "contact" },
+    home: { title: "home" },
+    };
+```
+
+#### 其他
+
+- Exclude<T, U> -- 从T中剔除可以赋值给U的类型。
+- Extract<T, U> -- 提取T中可以赋值给U的类型。
+- NonNullable<T> -- 从T中剔除null和undefined。
+- ReturnType<T> -- 获取函数返回值类型。
+- InstanceType<T> -- 获取构造函数类型的实例类型。
+
+```javascript
+    type T00 = Exclude<"a" | "b" | "c" | "d", "a" | "c" | "f">;  // "b" | "d"
+    type T01 = Extract<"a" | "b" | "c" | "d", "a" | "c" | "f">;  // "a" | "c"
+
+    type T02 = Exclude<string | number | (() => void), Function>;  // string | number
+    type T03 = Extract<string | number | (() => void), Function>;  // () => void
+
+    type T04 = NonNullable<string | number | undefined>;  // string | number
+    type T05 = NonNullable<(() => string) | string[] | null | undefined>;  // (() => string) | string[]
+
+    function f1(s: string) {
+        return { a: 1, b: s };
+    }
+
+    class C {
+        x = 0;
+        y = 0;
+    }
+
+    type T10 = ReturnType<() => string>;  // string
+    type T11 = ReturnType<(s: string) => void>;  // void
+    type T12 = ReturnType<(<T>() => T)>;  // {}
+    type T13 = ReturnType<(<T extends U, U extends number[]>() => T)>;  // number[]
+    type T14 = ReturnType<typeof f1>;  // { a: number, b: string }
+    type T15 = ReturnType<any>;  // any
+    type T16 = ReturnType<never>;  // any
+    type T17 = ReturnType<string>;  // Error
+    type T18 = ReturnType<Function>;  // Error
+
+    type T20 = InstanceType<typeof C>;  // C
+    type T21 = InstanceType<any>;  // any
+    type T22 = InstanceType<never>;  // any
+    type T23 = InstanceType<string>;  // Error
+    type T24 = InstanceType<Function>;  // Error
+```
+
+
+
+
+
+
+
 
 
 
