@@ -155,7 +155,7 @@
 或单独地指定每个文件。
 `tsc --outFile sample.js Validation.ts LettersOnlyValidator.ts ZipCodeValidator.ts Test.ts`
 
-第二种方式，我们可以编译每一个文件（默认方式），那么每个源文件都会对应生成一个JavaScript文件。 然后，在页面上通过 <script>标签把所有生成的JavaScript文件按正确的顺序引进来
+第二种方式，我们可以编译每一个文件（默认方式），那么每个源文件都会对应生成一个JavaScript文件。 然后，在页面上通过 `<script>`标签把所有生成的JavaScript文件按正确的顺序引进来
 
 ```javascript
     <script src="Validation.js" type="text/javascript" />
@@ -312,5 +312,5 @@
 
 #### 装饰器
 
-安达市多
+
 
