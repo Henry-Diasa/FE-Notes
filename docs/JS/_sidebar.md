@@ -2,3 +2,4 @@
   - [JS基础](/JS/1.md)
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
+  - [Typescript其他](/JS/ts-other.md)
