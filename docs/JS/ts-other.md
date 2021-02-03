@@ -312,5 +312,250 @@
 
 #### 装饰器
 
+`基础使用`
+> 有一个`@sealed`装饰器，我们会这样定义`sealed`函数：
+
+```javascript
+    function sealed(target) {
+        // do something with "target" ...
+    }
+```
+
+`装饰器工厂`
+
+```javascript
+    function color(value: string) { // 这是一个装饰器工厂
+        return function (target) { //  这是装饰器
+            // do something with "target" and "value"...
+        }
+    }
+```
+
+`装饰器组合`
+
+在TypeScript里，当多个装饰器应用在一个声明上时会进行如下步骤的操作：
+
+- 由上至下依次对装饰器表达式求值。
+- 求值的结果会被当作函数，由下至上依次调用。
+
+```javascript
+    function f() {
+        console.log("f(): evaluated");
+        return function (target, propertyKey: string, descriptor: PropertyDescriptor) {
+            console.log("f(): called");
+        }
+    }
+
+    function g() {
+        console.log("g(): evaluated");
+        return function (target, propertyKey: string, descriptor: PropertyDescriptor) {
+            console.log("g(): called");
+        }
+    }
+
+    class C {
+        @f()
+        @g()
+        method() {}
+    }
+    /*
+        控制台打印
+        f(): evaluated
+        g(): evaluated
+        g(): called
+        f(): called
+    */
+```
+
+`类装饰器`
+> 类装饰器表达式会在运行时当作函数被调用，类的`构造函数`作为其唯一的参数。
+
+```javascript
+    @sealed
+    class Greeter {
+        greeting: string;
+        constructor(message: string) {
+            this.greeting = message;
+        }
+        greet() {
+            return "Hello, " + this.greeting;
+        }
+    }
+
+    function sealed(constructor: Function) {
+        Object.seal(constructor);
+        Object.seal(constructor.prototype);
+    }
+```
+`方法装饰器`
+
+方法装饰器表达式会在运行时当作函数被调用，传入下列3个参数：
+
+- 1、对于`静态成员`来说是类的`构造函数`，对于`实例成员`是类的`原型对象`。
+- 2、成员的名字。
+- 3、成员的属性描述符。
+
+如果方法装饰器`返回一个值`，它会被用作方法的`属性描述符`。
+
+```javascript
+    class Greeter {
+        greeting: string;
+        constructor(message: string) {
+            this.greeting = message;
+        }
+
+        @enumerable(false)
+        greet() {
+            return "Hello, " + this.greeting;
+        }
+    }
+
+    function enumerable(value: boolean) {
+        return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+            descriptor.enumerable = value;
+        };
+    }
+```
+
+`访问器装饰器`
+> TypeScript不允许同时装饰一个成员的get和set访问器, 装饰器的规则同`方法装饰器`
+
+```javascript
+    class Point {
+        private _x: number;
+        private _y: number;
+        constructor(x: number, y: number) {
+            this._x = x;
+            this._y = y;
+        }
+
+        @configurable(false)
+        get x() { return this._x; }
+
+        @configurable(false)
+        get y() { return this._y; }
+    }
+
+    function configurable(value: boolean) {
+        return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+            descriptor.configurable = value;
+        };
+    }
+```
+
+`属性装饰器`
+
+属性装饰器表达式会在运行时当作函数被调用，传入下列2个参数：
+
+- 对于静态成员来说是类的构造函数，对于实例成员是类的原型对象。
+- 成员的名字。
+
+```javascript
+    class Greeter {
+        @format("Hello, %s")
+        greeting: string;
+
+        constructor(message: string) {
+            this.greeting = message;
+        }
+        greet() {
+            let formatString = getFormat(this, "greeting");
+            return formatString.replace("%s", this.greeting);
+        }
+    }
+
+    import "reflect-metadata";
+
+    const formatMetadataKey = Symbol("format");
+
+    function format(formatString: string) {
+        return Reflect.metadata(formatMetadataKey, formatString);
+    }
+
+    function getFormat(target: any, propertyKey: string) {
+        return Reflect.getMetadata(formatMetadataKey, target, propertyKey);
+    }
+```
+
+`参数装饰器`
+
+参数装饰器表达式会在运行时当作函数被调用，传入下列3个参数：
+
+- 对于静态成员来说是类的构造函数，对于实例成员是类的原型对象。
+- 成员的名字。
+- 参数在函数参数列表中的索引。
 
 
+```javascript
+    class Greeter {
+        greeting: string;
+
+        constructor(message: string) {
+            this.greeting = message;
+        }
+
+        @validate
+        greet(@required name: string) {
+            return "Hello " + name + ", " + this.greeting;
+        }
+    }
+```
+
+
+#### Mixins
+
+```javascript
+    // Disposable Mixin
+    class Disposable {
+        isDisposed: boolean;
+        dispose() {
+            this.isDisposed = true;
+        }
+
+    }
+
+    // Activatable Mixin
+    class Activatable {
+        isActive: boolean;
+        activate() {
+            this.isActive = true;
+        }
+        deactivate() {
+            this.isActive = false;
+        }
+    }
+
+    class SmartObject implements Disposable, Activatable {
+        constructor() {
+            setInterval(() => console.log(this.isActive + " : " + this.isDisposed), 500);
+        }
+
+        interact() {
+            this.activate();
+        }
+
+        // Disposable
+        isDisposed: boolean = false;
+        dispose: () => void;
+        // Activatable
+        isActive: boolean = false;
+        activate: () => void;
+        deactivate: () => void;
+    }
+    applyMixins(SmartObject, [Disposable, Activatable]);
+
+    let smartObj = new SmartObject();
+    setTimeout(() => smartObj.interact(), 1000);
+
+    ////////////////////////////////////////
+    // In your runtime library somewhere
+    ////////////////////////////////////////
+
+    function applyMixins(derivedCtor: any, baseCtors: any[]) {
+        baseCtors.forEach(baseCtor => {
+            Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
+                derivedCtor.prototype[name] = baseCtor.prototype[name];
+            });
+        });
+    }
+```
