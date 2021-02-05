@@ -1,3 +1,3 @@
 - Node
-  - [Node基础](/Node/1.md)
+  - [Node基础](/Node/basic.md)
   - [Node进阶](/Node/2.md)
