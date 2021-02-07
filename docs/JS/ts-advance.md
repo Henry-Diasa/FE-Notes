@@ -947,6 +947,26 @@ padLeft("Hello world", 4); // returns "    Hello world"
     }
 ```
 
+- in
+> in 操作符可以安全的检查一个对象上是否存在一个属性，它通常也被作为类型保护使用：
+```javascript
+    interface A {
+        x: number;
+    }
+
+    interface B {
+        y: string;
+    }
+
+    function doStuff(q: A | B) {
+        if ('x' in q) {
+            // q: A
+        } else {
+            // q: B
+        }
+    }
+```
+
 #### 可以为null的类型
 
 > 当使用`--strictNullChecks`标记的时候，声明一个变量，它不会自动的包含`null`或者`undefined`。需要使用联合类型明确的包含他们
