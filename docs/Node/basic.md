@@ -14,3 +14,36 @@
     "dev:start": "nodemon node ./build/crowller.js",
     "dev": "concurrently npm:dev:*" 
 ```
+- [cookie-session](https://www.npmjs.com/package/cookie-session)
+
+
+### 常见的一些小问题
+
+- express使用body-parse等中间件处理后，新的参数ts检测不到
+
+```javascript
+import { Request } from 'express';
+  
+ // 手动写个接口来进行扩展
+interface RequestWithBody extends Request {
+  body: {
+    [key: string]: string | undefined;
+  };
+} 
+router.post('/getData', (req: RequestWithBody, res: Response) => {
+  // 这样req.body 上面就可以检测出新的password等参数了  
+  const { password } = req.body;  
+}
+
+```
+
+- 自定义express的声明文件
+
+```javascript
+    // 这样req上就可以req.name = 'xx' 来进行赋值
+    declare namespace Express {
+        interface Request {
+            name: string;
+        }
+    }
+```
