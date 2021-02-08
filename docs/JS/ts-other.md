@@ -500,7 +500,9 @@
         }
     }
 ```
+`装饰器的应用`
 
+[通过ts装饰器封装controller路由请求](https://github.com/Henry-Diasa/ts-decorator-router)
 
 #### Mixins
 
