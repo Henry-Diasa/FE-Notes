@@ -103,7 +103,8 @@ const teacherList: [string, string, number][] = [['foo', 'male', 19], ['sun', 'f
     }
 ```
 
-声明一个`void`类型的变量没有什么大用，因为你只能为它赋予`undefined`和`null`
+声明一个`void`类型的变量没有什么大用，因为你只能为它赋予`undefined`和`null`(非严格模式(strictNullChecks:false))
+严格模式(strictNullChecks:true)下只能返回undefined
 
 ```javascript
     let unusable: void = undefined;
@@ -166,5 +167,15 @@ never类型是任何类型的子类型，也可以赋值给任何类型；然而
     let strLength: number = (someValue as string).length;
     // 第二种 这种方式在 JSX 里面是不被允许的
     let strLength: number = (<string>someValue).length;
+```
+
+双重断言
+
+```javascript
+interface Person {
+    name: string;
+    age: number;
+}
+const person = 'xx' as any as Person; // ok
 ```
 

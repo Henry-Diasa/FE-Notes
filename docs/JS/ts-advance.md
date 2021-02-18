@@ -413,7 +413,11 @@ TypeScript具有`ReadonlyArray<T>`类型
 
     let point3d: Point3d = {x: 1, y: 2, z: 3}; 
 ```
-
+注意：
+```javascript
+    "strictPropertyInitialization": true / 启用类属性初始化的严格检查/
+    name!:string  // 类里面的属性需要加! 来避免初始化未赋值的报错
+```
 ### 函数
 
 `函数类型`
@@ -752,13 +756,16 @@ TypeScript具有`ReadonlyArray<T>`类型
 ```
 
 `const枚举`
+- 常数枚举与普通枚举的区别是，它会在编译阶段被删除，并且不能包含计算成员。
+- 假如包含了计算成员，则会在编译阶段报错
 
 ```javascript
     const enum Directions {
         Up,
         Down,
         Left,
-        Right
+        Right,
+        xx = "xx".length,  // 报错
     }
 
     let directions = [Directions.Up, Directions.Down, Directions.Left, Directions.Right]
