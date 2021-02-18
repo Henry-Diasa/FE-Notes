@@ -973,6 +973,165 @@ padLeft("Hello world", 4); // returns "    Hello world"
         }
     }
 ```
+- null保护
+> 如果开启了strictNullChecks选项，那么对于可能为null的变量不能调用它上面的方法和属性
+
+```javascript
+    function getFirstLetter(s: string | null) {
+        //第一种方式是加上null判断
+        if (s == null) {
+            return '';
+        }
+        //第二种处理是增加一个或的处理
+        s = s || '';
+        return s.charAt(0);
+    }
+    //它并不能处理一些复杂的判断，需要加非空断言操作符
+    function getFirstLetter2(s: string | null) {
+        function log() {
+            console.log(s!.trim());
+        }
+        s = s || '';
+        log();
+        return s.charAt(0);
+    }
+```
+
+- 链判断运算符
+> 链判断运算符是一种先检查属性是否存在，再尝试访问该属性的运算符，其符号为 `?. `。如果运算符左侧的操作数 ?. 计算为 undefined 或 null，则表达式求值为 undefined 。否则，正常触发目标属性访问，方法或函数调用。
+
+> 链判断运算符 还处于 stage1 阶段,TS 也暂时不支持
+
+```javascript
+    a?.b; //如果a是null/undefined,那么返回undefined，否则返回a.b的值.
+    a == null ? undefined : a.b;
+
+    a?.[x]; //如果a是null/undefined,那么返回undefined，否则返回a[x]的值
+    a == null ? undefined : a[x];
+
+    a?.b(); // 如果a是null/undefined,那么返回undefined
+    a == null ? undefined : a.b(); //如果a.b不函数的话抛类型错误异常,否则计算a.b()的结果
+
+    a?.(); //如果a是null/undefined,那么返回undefined
+    a == null ? undefined : a(); //如果A不是函数会抛出类型错误
+    //否则 调用a这个函数
+```
+
+- 可辨识的联合类型
+> 就是利用联合类型中的共有字段进行类型保护的一种技巧, 相同字段的不同取值就是可辨识
+
+```javascript
+    interface User {
+        username: string
+    }
+    type Action = {
+        type:'add',
+        payload:User
+    } | {
+        type: 'delete'
+        payload: number
+    }
+    const UserReducer = (action: Action) => {
+    switch (action.type) {
+        case "add":
+        let user: User = action.payload;
+        break;
+        case "delete":
+        let id: number = action.payload;
+        break;
+        default:
+        break;
+    }
+    };
+```
+
+- unknown
+    - TypeScript 3.0 引入了新的unknown 类型，它是 any 类型对应的安全类型
+    - unknown 和 any 的主要区别是 unknown 类型会更加严格：在对 unknown 类型的值执行大多数操作之前，我们必须进行某种形式的检查。而在对 any 类型的值执行操作之前，我们不必进行任何检查
+    - 就像所有类型都可以被归为 any，所有类型也都可以被归为 unknown。这使得 unknown 成为 TypeScript 类型系统的另一种顶级类型（另一种是 any）
+    - 任何类型都可以赋值给unknown类型
+
+    ```javascript
+        let value: unknown;
+
+        value = true;             // OK
+        value = 42;               // OK
+        value = "Hello World";    // OK
+        value = [];               // OK
+        value = {};               // OK
+        value = Math.random;      // OK
+        value = null;             // OK
+        value = undefined;        // OK
+        value = new TypeError();  // OK
+    ```
+    - unknown类型只能被赋值给any类型和unknown类型本身
+
+    ```javascript
+        let value: unknown;
+        let value1: unknown = value;   // OK
+        let value2: any = value;       // OK
+        let value3: boolean = value;   // Error
+        let value4: number = value;    // Error
+        let value5: string = value;    // Error
+        let value6: object = value;    // Error
+        let value7: any[] = value;     // Error
+        let value8: Function = value;  // Error
+    ```
+    - 缩小 unknown 类型范围 (如果没有类型断言或类型细化时，不能在unknown上面进行任何操作, 可以对 unknown 类型使用类型断言)
+
+    ```javascript
+        const value: unknown = "Hello World";
+        const someString: string = value as string;
+    ```
+    - 联合类型中的 unknown 类型 
+    ```javascript
+        // 在联合类型中，unknown 类型会吸收任何类型。这就意味着如果任一组成类型是 unknown，联合类型也会相当于 unknown：
+        type UnionType1 = unknown | null;       // unknown
+        type UnionType2 = unknown | undefined;  // unknown
+        type UnionType3 = unknown | string;     // unknown
+        type UnionType4 = unknown | number[];   // unknown
+    ```
+    - 交叉类型中的 unknown 类型
+
+    ```javascript
+        // 在交叉类型中，任何类型都可以吸收 unknown 类型。这意味着将任何类型与 unknown 相交不会改变结果类型
+        type IntersectionType1 = unknown & null;       // null
+        type IntersectionType2 = unknown & undefined;  // undefined
+        type IntersectionType3 = unknown & string;     // string
+        type IntersectionType4 = unknown & number[];   // number[]
+        type IntersectionType5 = unknown & any;        // any
+    ```
+    - never是unknown的子类型
+    ```javascript
+        type isNever = never extends unknown ? true : false;
+    ```
+    - keyof unknown 等于never
+
+    ```javascript
+        type key = keyof unknown;
+    ```
+    - 只能对unknown进行等或不等操作，不能进行其它操作
+
+    ```javascript
+        un1===un2;
+        un1!==un2;
+        un1 += un2;
+
+        un.name  // 不能访问属性
+        un();  // 不能作为函数调用
+        new un();  // 不能当作类的构造函数不能创建实例
+    ```
+
+    - 映射属性
+
+    ```javascript
+        // 如果映射类型遍历的时候是unknown,不会映射属性
+        type getType<T> = {
+        [P in keyof T]:number
+        }
+        type t = getType<unknown>;
+    ```
+
 
 #### 可以为null的类型
 
@@ -1249,12 +1408,132 @@ padLeft("Hello world", 4); // returns "    Hello world"
 ```
 
 #### 其他
+- typeof
+> 可以获取一个变量的类型
+```javascript
+    //先定义变量，再定义类型
+    let p1 = {
+        name:'zhufeng',
+        age:10,
+        gender:'male'
+    }
+    type People = typeof p1;
+    function getName(p:People):string{
+        return p.name;
+    }
+    getName(p1);
+```
+- 索引访问操作符
+> 可以通过[]获取一个类型的子类型
+```javascript
+    interface Person{
+        name:string;
+        age:number;
+        job:{
+            name:string
+        };
+        interests:{name:string,level:number}[]
+    }
+    let FrontEndJob:Person['job'] = {
+        name:'前端工程师'
+    }
+    let interestLevel:Person['interests'][0]['level'] = 2;
+```
+- keyof
+> 索引类型查询操作符
+```javascript
+    interface Person{
+    name:string;
+    age:number;
+    gender:'male'|'female';
+    }
+    //type PersonKey = 'name'|'age'|'gender';
+    type PersonKey = keyof Person;
 
-- Exclude<T, U> -- 从T中剔除可以赋值给U的类型。
-- Extract<T, U> -- 提取T中可以赋值给U的类型。
-- NonNullable<T> -- 从T中剔除null和undefined。
-- ReturnType<T> -- 获取函数返回值类型。
-- InstanceType<T> -- 获取构造函数类型的实例类型。
+    function getValueByKey(p:Person,key:PersonKey){
+    return p[key];
+    }
+    let val = getValueByKey({name:'zhufeng',age:10,gender:'male'},'name');
+    console.log(val);
+```
+- 映射类型
+    - 在定义的时候用in操作符去批量定义类型中的属性
+    ```javascript
+        interface Person{
+            name:string;
+            age:number;
+            gender:'male'|'female';
+        }
+        //批量把一个接口中的属性都变成可选的
+        type PartPerson = {
+        [Key in keyof Person]?:Person[Key]
+        }
+
+        let p1:PartPerson={};
+        //也可以使用泛型
+        type Part<T> = {
+        [key in keyof T]?:T[key]
+        }
+        let p2:Part<Person>={};
+    ```
+    - 通过key的数组获取值的数组
+    ```javascript
+        function pick<T, K extends keyof T>(o: T, names: K[]): T[K][] {
+            return names.map((n) => o[n]);
+        }
+        let user = { id: 1, name: 'zhufeng' };
+        type User = typeof user;
+        const res = pick<User, keyof User>(user, ["id", "name"]);
+        console.log(res);
+    ```
+
+- 内置条件类型
+
+    - Exclude<T, U> -- 从T中剔除可以赋值给U的类型。
+    ```javascript
+        type Exclude<T, U> = T extends U ? never : T;
+
+        type  E = Exclude<string|number,string>;
+        let e:E = 10;
+    ```
+    - Extract<T, U> -- 提取T中可以赋值给U的类型。
+    ```javascript
+        type Extract<T, U> = T extends U ? T : never;
+
+        type  E = Extract<string|number,string>;
+        let e:E = '1';
+    ```
+    - NonNullable<T> -- 从T中剔除null和undefined。
+    ```javascript
+        type NonNullable<T> = T extends null | undefined ? never : T;
+
+        type  E = NonNullable<string|number|null|undefined>;
+        let e:E = null;
+    ```
+    - ReturnType<T> -- 获取函数返回值类型。
+    - Parameters -- Constructs a tuple type of the types of the parameters of a function type T
+    ```javascript
+        type T0 = Parameters<() => string>;  // []
+        type T1 = Parameters<(s: string) => void>;  // [string]
+        type T2 = Parameters<(<T>(arg: T) => T)>;  // [unknown]
+    ```
+    - InstanceType<T> -- 获取构造函数类型的实例类型。
+
+    ```javascript
+        class Person {
+            name: string;
+            constructor(name: string) {
+                this.name = name;
+            }
+            getName() { console.log(this.name) }
+        }
+        //构造函数参数
+        type constructorParameters = ConstructorParameters<typeof Person>;
+        let params: constructorParameters = ['zhufeng']
+        //实例类型
+        type Instance = InstanceType<typeof Person>;
+        let instance: Instance = { name: 'zhufeng', getName() { } };
+    ```
 
 ```javascript
     type T00 = Exclude<"a" | "b" | "c" | "d", "a" | "c" | "f">;  // "b" | "d"
@@ -1291,6 +1570,147 @@ padLeft("Hello world", 4); // returns "    Hello world"
     type T23 = InstanceType<string>;  // Error
     type T24 = InstanceType<Function>;  // Error
 ```
+
+#### 内置工具类型
+> TypeScript中增加了对映射类型修饰符的控制。具体而言，一个 readonly 或 ? 修饰符在一个映射类型里可以用前缀 +（可选） 或-（必选）来表示这个修饰符应该被添加或移除
+- Partial
+> Partial 可以将传入的属性由非可选变为可选，具体使用如下
+
+```javascript
+    type Partial<T> = { [P in keyof T]?: T[P] };
+
+    interface A {
+    a1: string;
+    a2: number;
+    a3: boolean;
+    }
+
+    type aPartial = Partial<A>;
+
+    const a: aPartial = {}; // 不会报错
+```
+
+- 类型递归
+
+```javascript
+    interface Company {
+        id: number
+        name: string
+    }
+
+    interface Person {
+        id: number
+        name: string
+        company: Company
+    }
+    type DeepPartial<T> = {
+        [U in keyof T]?: T[U] extends object
+        ? DeepPartial<T[U]>
+        : T[U]
+    };
+
+    type R2 = DeepPartial<Person>
+```
+
+- Required
+> Required 可以将传入的属性中的可选项变为必选项，这里用了 -? 修饰符来实现。
+
+```javascript
+    interface Person{
+        name:string;
+        age:number;
+        gender?:'male'|'female';
+    }
+    /**
+    * type Require<T> = { [P in keyof T]-?: T[P] };
+    */
+    let p:Required<Person> = {
+    name:'zhufeng',
+    age:10,
+    //gender:'male'
+    }
+```
+- Readonly
+
+```javascript
+    interface Person{
+    name:string;
+    age:number;
+    gender?:'male'|'female';
+    }
+    //type Readonly<T> = { readonly [P in keyof T]: T[P] };
+    let p:Readonly<Person> = {
+    name:'zhufeng',
+    age:10,
+    gender:'male'
+    }
+    p.age = 11;
+```
+
+- Pick
+> Pick 能够帮助我们从传入的属性中摘取某一项返回
+
+```javascript
+    interface Animal {
+    name: string;
+    age: number;
+    gender:number
+    }
+    /**
+    * From T pick a set of properties K
+    * type Pick<T, K extends keyof T> = { [P in K]: T[P] };
+    */
+    // 摘取 Animal 中的 name 属性
+    interface Person {
+        name: string;
+        age: number;
+        married: boolean
+    }
+    function pick<T, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
+        const result: any = {};
+        keys.map(key => {
+            result[key] = obj[key];
+        });
+        return result
+    }
+    let person: Person = { name: 'zhufeng', age: 10, married: true };
+    let result: Pick<Person, 'name' | 'age'> = pick<Person, 'name' | 'age'>(person, ['name', 'age']);
+    console.log(result);
+```
+
+- Record
+
+> Record 是 TypeScript 的一个高级类型。他会将一个类型的所有属性值都映射到另一个类型上并创造一个新的类型
+
+```javascript
+    /**
+    * Construct a type with a set of properties K of type T
+    */
+    type Record<K extends keyof any, T> = {
+        [P in K]: T;
+    };
+
+    function mapObject<K extends string | number, T, U>(obj: Record<K, T>, map: (x: T) => U): Record<K, U> {
+        let result: any = {};
+        for (const key in obj) {
+            result[key] = map(obj[key]);
+        }
+        return result;
+    }
+    let names = { 0: 'hello', 1: 'world' };
+    let lengths = mapObject<string | number, string, number>(names, (s: string) => s.length);
+    console.log(lengths);//{ '0': 5, '1': 5 }
+
+    type Point = 'x' | 'y';
+    type PointList = Record<Point, { value: number }>
+    const cars: PointList = {
+        x: { value: 10 },
+        y: { value: 20 },
+    }
+```
+
+
+
 
 
 
