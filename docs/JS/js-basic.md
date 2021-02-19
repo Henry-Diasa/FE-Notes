@@ -173,7 +173,7 @@ console.log(Object.prototype.__proto__ === null) // true
 >
 > JavaScript 采用`词法作用域`(lexical scoping)，也就是`静态作用域`。
 
-### 静态作用域与动态作用域
+#### 静态作用域与动态作用域
 
 > 因为 JavaScript 采用的是`词法作用域`，函数的作用域在`函数定义的时候就决定了`。
 >
