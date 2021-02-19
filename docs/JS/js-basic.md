@@ -162,3 +162,103 @@ console.log(Object.prototype.__proto__ === null) // true
   > 最后是关于继承，前面我们讲到“每一个对象都会从原型‘继承’属性”，实际上，继承是一个十分具有迷惑性的说法，引用《你不知道的JavaScript》中的话，就是：
   >
   > 继承意味着复制操作，然而 JavaScript 默认并不会复制对象的属性，相反，JavaScript 只是在两个对象之间创建一个关联，这样，一个对象就可以通过委托访问另一个对象的属性和函数，所以与其叫继承，委托的说法反而更准确些。
+
+### 词法作用域和动态作用域
+
+#### 作用域
+
+> 作用域是指程序源代码中`定义变量的区域`。
+>
+> 作用域规定了如何`查找变量`，也就是确定当前执行代码对变量的`访问权限`。
+>
+> JavaScript 采用`词法作用域`(lexical scoping)，也就是`静态作用域`。
+
+### 静态作用域与动态作用域
+
+> 因为 JavaScript 采用的是`词法作用域`，函数的作用域在`函数定义的时候就决定了`。
+>
+> 而与词法作用域相对的是`动态作用域`，函数的作用域是在`函数调用的时候才决定的`。
+
+```javascript
+var value = 1;
+
+function foo() {
+    console.log(value);
+}
+
+function bar() {
+    var value = 2;
+    foo();
+}
+
+bar();  // 1
+```
+
+假设JavaScript采用静态作用域，让我们分析下执行过程：
+
+执行 foo 函数，先从 foo 函数内部查找是否有局部变量 value，如果没有，就根据书写的位置，查找上面一层的代码，也就是 value 等于 1，所以结果会打印 1。
+
+假设JavaScript采用动态作用域，让我们分析下执行过程：
+
+执行 foo 函数，依然是从 foo 函数内部查找是否有局部变量 value。如果没有，就从调用函数的作用域，也就是 bar 函数内部查找 value 变量，所以结果会打印 2。
+
+前面我们已经说了，JavaScript采用的是静态作用域，所以这个例子的结果是 1。
+
+#### 动态作用域
+
+> bash 就是动态作用域，不信的话，把下面的脚本存成例如 scope.bash，然后进入相应的目录，用命令行执行 `bash ./scope.bash`
+
+```javascript
+value=1
+function foo () {
+    echo $value;
+}
+function bar () {
+    local value=2;
+    foo;
+}
+bar
+```
+
+#### 思考题
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f();
+}
+checkscope();
+```
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f;
+}
+checkscope()();
+```
+
+两段代码都会打印：`local scope`。
+
+原因也很简单，因为JavaScript采用的是词法作用域，函数的作用域基于`函数创建的位置`
+
+> 引用《JavaScript权威指南》的回答就是：
+>
+> JavaScript 函数的执行用到了作用域链，这个作用域链是在函数定义的时候创建的。嵌套的函数 f() 定义在这个作用域链里，其中的变量 scope 一定是局部变量，不管何时何地执行函数 f()，这种绑定在执行 f() 时依然有效。
+
+虽然两段代码执行的结果一样，但是两段代码究竟有哪些不同呢？
+
+
+
+
+
+
+
