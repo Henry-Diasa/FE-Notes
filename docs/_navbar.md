@@ -1,2 +1,2 @@
-- [前端基础](/JS/1.md)
+- [前端基础](/JS/js-basic.md)
 - [Node](/Node/basic.md)
