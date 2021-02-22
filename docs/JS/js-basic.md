@@ -779,3 +779,840 @@ ECStack = [
 ];
 ```
 
+### ECMAScript规范解读this
+
+#### 前言
+
+> 前两节讲到了变量对象和作用域链，接下来说说this
+
+ ECMAScript 5.1 规范地址
+
+[中文版](http://yanhaijing.com/es5/#71)
+
+#### Types
+
+首先是第 8 章 Types：
+
+> Types are further subclassified into ECMAScript language types and specification types.
+
+> An ECMAScript language type corresponds to values that are directly manipulated by an ECMAScript programmer using the ECMAScript language. The ECMAScript language types are Undefined, Null, Boolean, String, Number, and Object.
+
+> A specification type corresponds to meta-values that are used within algorithms to describe the semantics of ECMAScript language constructs and ECMAScript language types. The specification types are Reference, List, Completion, Property Descriptor, Property Identifier, Lexical Environment, and Environment Record.
+
+简单翻译一下：
+
+ECMAScript 的类型分为`语言类型`和`规范类型`。
+
+ECMAScript `语言类型`是开发者直接`使用 ECMAScript 可以操作`的。其实就是我们常说的Undefined, Null, Boolean, String, Number, 和 Object。
+
+而规范类型相当于 meta-values，是用来用算法`描述 ECMAScript 语言结构`和 `ECMAScript 语言类型`的。规范类型包括：Reference, List, Completion, Property Descriptor, Property Identifier, Lexical Environment, 和 Environment Record。
+
+我们只要知道在 ECMAScript 规范中还有一种只存在于规范中的类型，它们的作用是用来描述语言底层行为逻辑
+
+#### Reference
+
+让我们看 8.7 章 The Reference Specification Type：
+
+> The Reference type is used to explain the behaviour of such operators as delete, typeof, and the assignment operators.
+
+所以 Reference 类型就是用来解释诸如 delete、typeof 以及赋值等操作行为的
+
+> 这里的 Reference 是一个 Specification Type，也就是 “只存在于规范里的抽象类型”。它们是为了更好地描述语言的底层行为逻辑才存在的，但并不存在于实际的 js 代码中。
+
+具体的Reference的内容
+
+> A Reference is a resolved name binding.
+
+> A Reference consists of three components, the base value, the referenced name and the Boolean valued strict reference flag.
+
+> The base value is either undefined, an Object, a Boolean, a String, a Number, or an environment record (10.2.1).
+
+> A base value of undefined indicates that the reference could not be resolved to a binding. The referenced name is a String.
+
+Reference 的构成，由三个组成部分，分别是：
+
+- base value
+- referenced name
+- strict  reference
+
+上面的话简单理解为
+
+base value 就是属性所在的对象或者就是 EnvironmentRecord，它的值只可能是 undefined, an Object, a Boolean, a String, a Number, or an environment record 其中的一种。
+
+referenced name 就是属性的名称。
+
+举个例子
+
+```javascript
+var foo = 1;
+
+// 对应的Reference是：
+var fooReference = {
+    base: EnvironmentRecord,
+    name: 'foo',
+    strict: false
+};
+```
+
+在举个例子
+
+```javascript
+var foo = {
+    bar: function () {
+        return this;
+    }
+};
+ 
+foo.bar(); // foo
+
+// bar对应的Reference是：
+var BarReference = {
+    base: foo,
+    propertyName: 'bar',
+    strict: false
+};
+```
+
+而且规范中还提供了获取 Reference 组成部分的方法，比如` GetBase` 和 `IsPropertyReference`。
+
+- GetBase
+
+  > GetBase(V). Returns the base value component of the reference V.
+
+  返回 reference 的 base value。
+
+- IsPropertyReference
+
+  > IsPropertyReference(V). Returns true if either the base value is an object or HasPrimitiveBase(V) is true; otherwise returns false.
+
+  简单的理解：如果 base value 是一个`对象`，就返回`true`。
+
+#### GetValue
+
+> GetValue 返回对象属性真正的值，但是要注意：**调用 GetValue，返回的将是具体的值，而不再是一个 Reference**  (这个很重要，这个很重要，这个很重要。)
+
+```javascript
+var foo = 1;
+
+var fooReference = {
+    base: EnvironmentRecord,
+    name: 'foo',
+    strict: false
+};
+
+GetValue(fooReference) // 1;
+```
+
+#### 如何确定this的值
+
+看规范 11.2.3 Function Calls：
+
+这里讲了当函数调用的时候，如何确定 this 的取值。
+
+只看第一步、第六步、第七步：
+
+> 1.Let *ref* be the result of evaluating MemberExpression.
+
+> 6.If Type(*ref*) is Reference, then
+
+>  ```
+> a.If IsPropertyReference(ref) is true, then
+>  ```
+
+> ```
+> i.Let thisValue be GetBase(ref)
+> ```
+
+> ```
+> b.Else, the base of ref is an Environment Record
+> ```
+
+> ```
+> i.Let thisValue be the result of calling the ImplicitThisValue concrete method of GetBase(ref).
+> ```
+
+> 7.Else, Type(*ref*) is not Reference.
+
+> ```
+> a. Let thisValue be undefined.
+> ```
+
+简单解释一下
+
+1、计算 MemberExpression 的结果赋值给 ref
+
+2、判断 ref 是不是一个 Reference 类型
+
+- 如果 ref 是 Reference，并且 IsPropertyReference(ref) 是 true, 那么 this 的值为 GetBase(ref)
+-  如果 ref 是 Reference，并且 base value 值是 Environment Record, 那么this的值为 ImplicitThisValue(ref)
+- 如果 ref 不是 Reference，那么 this 的值为 undefined
+
+#### 具体分析
+
+让我们一步一步看：
+
+1. 计算 MemberExpression 的结果赋值给 ref
+
+什么是 MemberExpression？看规范 11.2 Left-Hand-Side Expressions：
+
+MemberExpression :
+
+- PrimaryExpression // 原始表达式 可以参见《JavaScript权威指南第四章》
+- FunctionExpression // 函数定义表达式
+- MemberExpression [ Expression ] // 属性访问表达式
+- MemberExpression . IdentifierName // 属性访问表达式
+- new MemberExpression Arguments // 对象创建表达式
+
+举个例子
+
+```javascript
+function foo() {
+    console.log(this)
+}
+
+foo(); // MemberExpression 是 foo
+
+function foo() {
+    return function() {
+        console.log(this)
+    }
+}
+
+foo()(); // MemberExpression 是 foo()
+
+var foo = {
+    bar: function () {
+        return this;
+    }
+}
+
+foo.bar(); // MemberExpression 是 foo.bar
+```
+
+简单理解 MemberExpression 其实就是`()左边`的部分。
+
+2.判断 ref 是不是一个 Reference 类型。
+
+关键就在于看规范是如何处理各种 MemberExpression，返回的结果是不是一个Reference类型。
+
+举最后一个例子：
+
+```javascript
+var value = 1;
+
+var foo = {
+  value: 2,
+  bar: function () {
+    return this.value;
+  }
+}
+
+//示例1
+console.log(foo.bar());
+//示例2
+console.log((foo.bar)());
+//示例3
+console.log((foo.bar = foo.bar)());
+//示例4
+console.log((false || foo.bar)());
+//示例5
+console.log((foo.bar, foo.bar)());
+```
+
+**foo.bar()**
+
+在示例 1 中，MemberExpression 计算的结果是 foo.bar，那么 foo.bar 是不是一个 Reference 呢？
+
+查看规范 11.2.1 Property Accessors，这里展示了一个计算的过程，什么都不管了，就看最后一步：
+
+> Return a value of type Reference whose base value is baseValue and whose referenced name is propertyNameString, and whose strict mode flag is strict.
+
+我们得知该表达式返回了一个 Reference 类型！
+
+根据之前的内容，我们知道该值为：
+
+```javascript
+var Reference = {
+  base: foo,
+  name: 'bar',
+  strict: false
+};
+```
+
+接下来按照 2.1 的判断流程走：
+
+> 2.1 如果 ref 是 Reference，并且 IsPropertyReference(ref) 是 true, 那么 this 的值为 GetBase(ref)
+
+该值是 Reference 类型，那么 IsPropertyReference(ref) 的结果是多少呢？
+
+前面我们已经铺垫了 IsPropertyReference 方法，如果 base value 是一个对象，结果返回 true。
+
+base value 为 foo，是一个对象，所以 IsPropertyReference(ref) 结果为 true。
+
+这个时候我们就可以确定 this 的值了：
+
+> this = GetBase(ref)，
+
+GetBase 也已经铺垫了，获得 base value 值，这个例子中就是foo，所以 this 的值就是 foo ，示例1的结果就是 2！
+
+**(foo.bar)()**
+
+```
+console.log((foo.bar)());
+```
+
+foo.bar 被 () 包住，查看规范 11.1.6 The Grouping Operator
+
+直接看结果部分：
+
+> Return the result of evaluating Expression. This may be of type Reference.
+
+> NOTE This algorithm does not apply GetValue to the result of evaluating Expression.
+
+实际上 () 并没有对 MemberExpression 进行计算，所以其实跟示例 1 的结果是一样的。
+
+**(foo.bar = foo.bar)()** 
+
+看示例3，有赋值操作符，查看规范 11.13.1 Simple Assignment ( = ):
+
+计算的第三步：
+
+> 3.Let rval be GetValue(rref).
+
+因为使用了 GetValue，所以返回的值不是 Reference 类型，
+
+按照之前讲的判断逻辑：
+
+> 2.3 如果 ref 不是Reference，那么 this 的值为 undefined
+
+this 为 undefined，非严格模式下，this 的值为 undefined 的时候，其值会被隐式转换为`全局对象`。
+
+**(false || foo.bar)()**
+
+看示例4，逻辑与算法，查看规范 11.11 Binary Logical Operators：
+
+计算第二步：
+
+> 2.Let lval be GetValue(lref).
+
+因为使用了 GetValue，所以返回的不是 Reference 类型，this 为 undefined
+
+**(foo.bar, foo.bar)()**
+
+看示例5，逗号操作符，查看规范11.14 Comma Operator ( , )
+
+计算第二步：
+
+> 2.Call GetValue(lref).
+
+因为使用了 GetValue，所以返回的不是 Reference 类型，this 为 undefined
+
+#### 揭晓结果
+
+```javascript
+var value = 1;
+
+var foo = {
+  value: 2,
+  bar: function () {
+    return this.value;
+  }
+}
+
+//示例1
+console.log(foo.bar()); // 2
+//示例2
+console.log((foo.bar)()); // 2
+//示例3
+console.log((foo.bar = foo.bar)()); // 1
+//示例4
+console.log((false || foo.bar)()); // 1
+//示例5
+console.log((foo.bar, foo.bar)()); // 1
+```
+
+注意：以上是在非严格模式下的结果，严格模式下因为 this 返回 undefined，所以示例 3 会报错。
+
+#### 补充
+
+```javascript
+function foo() {
+    console.log(this)
+}
+
+foo(); 
+```
+
+
+
+MemberExpression 是 foo，解析标识符，查看规范 10.3.1 Identifier Resolution，会返回一个 Reference 类型的值：
+
+```javascript
+var fooReference = {
+    base: EnvironmentRecord,
+    name: 'foo',
+    strict: false
+};
+```
+
+接下来进行判断：
+
+> 2.1 如果 ref 是 Reference，并且 IsPropertyReference(ref) 是 true, 那么 this 的值为 GetBase(ref)
+
+因为 base value 是 EnvironmentRecord，并不是一个 Object 类型，还记得前面讲过的 base value 的取值可能吗？ 只可能是 undefined, an Object, a Boolean, a String, a Number, 和 an environment record 中的一种。
+
+IsPropertyReference(ref) 的结果为 false，进入下个判断：
+
+> 2.2 如果 ref 是 Reference，并且 base value 值是 Environment Record, 那么this的值为 ImplicitThisValue(ref)
+
+base value 正是 Environment Record，所以会调用 ImplicitThisValue(ref)
+
+查看规范 10.2.1.1.6，ImplicitThisValue 方法的介绍：该函数始终返回 undefined。
+
+所以最后 this 的值就是 undefined。
+
+
+
+### 执行上下文
+
+#### 思考题
+
+在词法作用域和动态作用域中，提出这样一道思考题
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f();
+}
+checkscope();
+```
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f;
+}
+checkscope()();
+```
+
+两段代码都会打印'local scope',两者的区别在于执行上下文栈的变化不一样，然而，如果是这样笼统的回答，依然显得不够详细，本篇就会详细的解析执行上下文栈和执行上下文的具体变化过程
+
+#### 具体的执行分析
+
+我们分析第一段代码：
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f();
+}
+checkscope();
+```
+
+执行过程如下：
+
+1.执行全局代码，创建全局执行上下文，全局上下文被压入执行上下文栈
+
+```javascript
+ECStack = [
+  globalContext
+];
+```
+
+2.全局上下文初始化
+
+```javascript
+    globalContext = {
+        VO: [global],
+        Scope: [globalContext.VO],
+        this: globalContext.VO
+    }
+```
+
+2.初始化的同时，checkscope 函数被创建，保存作用域链到函数的内部属性[[scope]]
+
+```javascript
+    checkscope.[[scope]] = [
+      globalContext.VO
+    ];
+```
+
+3.执行 checkscope 函数，创建 checkscope 函数执行上下文，checkscope 函数执行上下文被压入执行上下文栈
+
+```javascript
+    ECStack = [
+        checkscopeContext,
+        globalContext
+    ];
+```
+
+4.checkscope 函数执行上下文初始化：
+
+1. 复制函数 [[scope]] 属性创建作用域链，
+2. 用 arguments 创建活动对象，
+3. 初始化活动对象，即加入形参、函数声明、变量声明，
+4. 将活动对象压入 checkscope 作用域链顶端。
+
+同时 f 函数被创建，保存作用域链到 f 函数的内部属性[[scope]]
+
+```javascript
+    checkscopeContext = {
+        AO: {
+            arguments: {
+                length: 0
+            },
+            scope: undefined,
+            f: reference to function f(){}
+        },
+        Scope: [AO, globalContext.VO],
+        this: undefined
+    }
+```
+
+5.执行 f 函数，创建 f 函数执行上下文，f 函数执行上下文被压入执行上下文栈
+
+```javascript
+    ECStack = [
+        fContext,
+        checkscopeContext,
+        globalContext
+    ];
+```
+
+6.f 函数执行上下文初始化, 以下跟第 4 步相同：
+
+1. 复制函数 [[scope]] 属性创建作用域链
+2. 用 arguments 创建活动对象
+3. 初始化活动对象，即加入形参、函数声明、变量声明
+4. 将活动对象压入 f 作用域链顶端
+
+```javascript
+ fContext = {
+        AO: {
+            arguments: {
+                length: 0
+            }
+        },
+        Scope: [AO, checkscopeContext.AO, globalContext.VO],
+        this: undefined
+    }
+```
+
+7.f 函数执行，沿着作用域链查找 scope 值，返回 scope 值
+
+8.f 函数执行完毕，f 函数上下文从执行上下文栈中弹出
+
+```javascript
+    ECStack = [
+        checkscopeContext,
+        globalContext
+    ];
+```
+
+9.checkscope 函数执行完毕，checkscope 执行上下文从执行上下文栈中弹出
+
+```javascript
+    ECStack = [
+        globalContext
+    ];
+```
+
+### 闭包
+
+#### 定义
+
+MDN 对闭包的定义为：
+
+> 闭包是指那些能够访问**自由变量**的函数
+
+什么是自由变量呢？
+
+> 自由变量是指在**函数中使用**的，但既**不是函数参数**也不是函数的**局部变量**的变量。
+
+ 由此，我们可以看出闭包有两部分组成
+
+> 闭包 = 函数 + 函数能够访问的自由变量
+
+举个例子
+
+```javascript
+var a = 1;
+
+function foo() {
+    console.log(a);
+}
+
+foo();
+```
+
+foo 函数可以访问变量 a，但是 a 既不是 foo 函数的局部变量，也不是 foo 函数的参数，所以 a 就是自由变量。
+
+那么，函数 foo + foo 函数访问的自由变量 a 不就是构成了一个闭包嘛……
+
+所以在《JavaScript权威指南》中就讲到：从技术的角度讲，所有的JavaScript函数都是闭包。
+
+咦，这怎么跟我们平时看到的讲到的闭包不一样呢！？
+
+别着急，这是理论上的闭包，其实还有一个实践角度上的闭包，让我们看看汤姆大叔翻译的关于闭包的文章中的定义：
+
+ECMAScript中，闭包指的是：
+
+1. 从理论角度：所有的函数。因为它们都在创建的时候就将上层上下文的数据保存起来了。哪怕是简单的全局变量也是如此，因为函数中访问全局变量就相当于是在访问自由变量，这个时候使用最外层的作用域。
+2. 从实践角度：以下函数才算是闭包：
+   1. 即使创建它的上下文已经销毁，它仍然存在（比如，内部函数从父函数中返回）
+   2. 在代码中引用了自由变量
+
+接下来就来讲讲实践上的闭包。
+
+#### 分析
+
+让我们先写个例子，例子依然是来自《JavaScript权威指南》，稍微做点改动：
+
+```javascript
+var scope = "global scope";
+function checkscope(){
+    var scope = "local scope";
+    function f(){
+        return scope;
+    }
+    return f;
+}
+
+var foo = checkscope();
+foo();
+```
+
+这里直接给出简要的执行过程：
+
+1. 进入全局代码，创建全局执行上下文，全局执行上下文压入执行上下文栈
+2. 全局执行上下文初始化
+3. 执行 checkscope 函数，创建 checkscope 函数执行上下文，checkscope 执行上下文被压入执行上下文栈
+4. checkscope 执行上下文初始化，创建变量对象、作用域链、this等
+5. checkscope 函数执行完毕，checkscope 执行上下文从执行上下文栈中弹出
+6. 执行 f 函数，创建 f 函数执行上下文，f 执行上下文被压入执行上下文栈
+7. f 执行上下文初始化，创建变量对象、作用域链、this等
+8. f 函数执行完毕，f 函数上下文从执行上下文栈中弹出
+
+了解到这个过程，我们应该思考一个问题，那就是：
+
+当 f 函数执行的时候，checkscope 函数上下文已经被销毁了啊(即从执行上下文栈中被弹出)，怎么还会读取到 checkscope 作用域下的 scope 值呢？
+
+以上的代码，要是转换成 PHP，就会报错，因为在 PHP 中，f 函数只能读取到自己作用域和全局作用域里的值，所以读不到 checkscope 下的 scope 值。(这段我问的PHP同事……)
+
+然而 JavaScript 却是可以的！
+
+当我们了解了具体的执行过程后，我们知道 f 执行上下文维护了一个作用域链：
+
+```javascript
+fContext = {
+    Scope: [AO, checkscopeContext.AO, globalContext.VO],
+}
+```
+
+对的，就是因为这个作用域链，f 函数依然可以读取到 checkscopeContext.AO 的值，说明当 f 函数引用了 checkscopeContext.AO 中的值的时候，即使 checkscopeContext 被销毁了，但是 JavaScript 依然会让 checkscopeContext.AO 活在内存中，f 函数依然可以通过 f 函数的作用域链找到它，正是因为 JavaScript 做到了这一点，从而实现了闭包这个概念。
+
+所以，让我们再看一遍实践角度上闭包的定义：
+
+1. 即使创建它的上下文已经销毁，它仍然存在（比如，内部函数从父函数中返回）
+2. 在代码中引用了自由变量
+
+再补充一个《JavaScript权威指南》英文原版对闭包的定义:
+
+> This combination of a function object and a scope (a set of variable bindings) in which the function’s variables are resolved is called a closure in the computer science literature.
+
+#### 必刷题
+
+接下来，看这道刷题必刷，面试必考的闭包题：
+
+```javascript
+var data = [];
+
+for (var i = 0; i < 3; i++) {
+  data[i] = function () {
+    console.log(i);
+  };
+}
+
+data[0]();
+data[1]();
+data[2]();
+```
+
+
+答案是都是 3，让我们分析一下原因：
+
+当执行到 data[0] 函数之前，此时全局上下文的 VO 为：
+
+```javascript
+globalContext = {
+    VO: {
+        data: [...],
+        i: 3
+    }
+}
+```
+
+当执行 data[0] 函数的时候，data[0] 函数的作用域链为：
+
+```javascript
+data[0]Context = {
+    Scope: [AO, globalContext.VO]
+}
+```
+
+data[0]Context 的 AO 并没有 i 值，所以会从 globalContext.VO 中查找，i 为 3，所以打印的结果就是 3。
+
+data[1] 和 data[2] 是一样的道理。
+
+所以让我们改成闭包看看：
+
+```javascript
+var data = [];
+
+for (var i = 0; i < 3; i++) {
+  data[i] = (function (i) {
+        return function(){
+            console.log(i);
+        }
+  })(i);
+}
+
+data[0]();
+data[1]();
+data[2]();
+```
+
+当执行到 data[0] 函数之前，此时全局上下文的 VO 为：
+
+```
+globalContext = {
+    VO: {
+        data: [...],
+        i: 3
+    }
+}
+```
+
+跟没改之前一模一样。
+
+当执行 data[0] 函数的时候，data[0] 函数的作用域链发生了改变：
+
+```
+data[0]Context = {
+    Scope: [AO, 匿名函数Context.AO globalContext.VO]
+}
+```
+
+匿名函数执行上下文的AO为：
+
+```
+匿名函数Context = {
+    AO: {
+        arguments: {
+            0: 0,
+            length: 1
+        },
+        i: 0
+    }
+}
+```
+
+data[0]Context 的 AO 并没有 i 值，所以会沿着作用域链从匿名函数 Context.AO 中查找，这时候就会找 i 为 0，找到了就不会往 globalContext.VO 中查找了，即使 globalContext.VO 也有 i 的值(值为3)，所以打印的结果就是0。
+
+data[1] 和 data[2] 是一样的道理。
+
+### 参数按值传递
+
+#### 定义
+
+在《JavaScript高级程序设计》第三版 4.1.3，讲到传递参数：
+
+> ECMAScript中所有函数的**参数都是按值**传递的。
+
+什么是按值传递呢？
+
+> 也就是说，把函数外部的值**复制给函数内部的参数**，就和把值从一个变量复制到另一个变量一样。
+
+#### 按值传递
+
+举个例子
+
+```javascript
+var value = 1;
+function foo(v) {
+    v = 2;
+    console.log(v); //2
+}
+foo(value);
+console.log(value) // 1
+```
+
+很好理解，当传递 value 到函数 foo 中，相当于拷贝了一份 value，假设拷贝的这份叫 _value，函数中修改的都是 _value 的值，而不会影响原来的 value 值。
+
+#### 引用传递？
+
+拷贝虽然很好理解，但是当值是一个复杂的数据结构的时候，拷贝就会产生性能上的问题。
+
+所以还有另一种传递方式叫做按引用传递。
+
+所谓按引用传递，就是传递对象的引用，函数内部对参数的任何改变都会影响该对象的值，因为两者引用的是同一个对象。
+
+举个例子：
+
+```javascript
+var obj = {
+    value: 1
+};
+function foo(o) {
+    o.value = 2;
+    console.log(o.value); //2
+}
+foo(obj);
+console.log(obj.value) // 2
+```
+
+哎，不对啊，连我们的红宝书都说了 ECMAScript 中所有函数的参数都是按值传递的，这怎么能按"引用传递"成功呢？
+
+而这究竟是不是引用传递呢？
+
+#### 第三种传递方式
+
+```javascript
+var obj = {
+    value: 1
+};
+function foo(o) {
+    o = 2;
+    console.log(o); //2
+}
+foo(obj);
+console.log(obj.value) // 1
+```
+
+如果 JavaScript 采用的是引用传递，外层的值也会被修改呐，这怎么又没被改呢？所以真的不是引用传递吗？
+
+这就要讲到其实还有第三种传递方式，叫按**共享传递**。
+
+而共享传递是指，在传递对象的时候，传递对象的引用的副本。
+
+**注意： 按引用传递是传递对象的引用，而按共享传递是传递对象的引用的副本！**
+
+所以修改 o.value，可以通过引用找到原值，但是直接修改 o，并不会修改原值。所以第二个和第三个例子其实都是按共享传递。
+
+最后，你可以这样理解：
+
+参数如果是基本类型是按值传递，如果是引用类型按共享传递。
+
+但是因为拷贝副本也是一种值的拷贝，所以在高程中也直接认为是按值传递了。
