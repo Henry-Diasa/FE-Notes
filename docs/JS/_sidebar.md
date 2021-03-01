@@ -1,5 +1,7 @@
 - JS
   - [深入JS](/JS/js-basic.md)
+  - [JS专题](/JS/js-special-debounce.md)
+    - [防抖](/JS/js-special-debounce.md)
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
   - [Typescript其他](/JS/ts-other.md)
