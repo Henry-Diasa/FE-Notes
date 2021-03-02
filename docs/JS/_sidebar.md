@@ -3,6 +3,7 @@
   - [JS专题之防抖](/JS/js-special-debounce.md)
   - [JS专题之节流](/JS/js-special-throttle.md)
   - [JS专题之数组去重](/JS/js-special-array-unique.md)
+  - [JS专题之类型判断（上）](/JS/js-special-type-judge1.md)
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
   - [Typescript其他](/JS/ts-other.md)
