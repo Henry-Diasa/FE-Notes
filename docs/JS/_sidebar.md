@@ -5,6 +5,9 @@
   - [JS专题之数组去重](/JS/js-special-array-unique.md)
   - [JS专题之类型判断（上）](/JS/js-special-type-judge1.md)
   - [JS专题之类型判断（下）](/JS/js-special-type-judge2.md)
+  - [JS专题之深浅拷贝](/JS/js-special-deepCopy.md)
+  - [JS专题之jQuery的extend](/JS/js-special-jq-extend.md)
+- Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
   - [Typescript其他](/JS/ts-other.md)
