@@ -8,6 +8,7 @@
   - [JS专题之深浅拷贝](/JS/js-special-deepCopy.md)
   - [JS专题之jQuery的extend](/JS/js-special-jq-extend.md)
   - [JS专题之数组中的最大值和最小值](/JS/js-special-array-max-min.md)
+  - [JS专题之数组扁平化](/JS/js-special-array-flatten.md)
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
