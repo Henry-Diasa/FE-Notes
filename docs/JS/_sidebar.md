@@ -9,6 +9,8 @@
   - [JS专题之jQuery的extend](/JS/js-special-jq-extend.md)
   - [JS专题之数组中的最大值和最小值](/JS/js-special-array-max-min.md)
   - [JS专题之数组扁平化](/JS/js-special-array-flatten.md)
+  - [JS专题之数组中查找指定元素](/JS/js-special-array-element.md)
+  - [JS专题之遍历方法each](/JS/js-special-traverse-each.md)
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
