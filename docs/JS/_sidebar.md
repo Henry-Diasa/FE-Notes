@@ -12,6 +12,8 @@
   - [JS专题之数组中查找指定元素](/JS/js-special-array-element.md)
   - [JS专题之遍历方法each](/JS/js-special-traverse-each.md)
   - [JS专题之判断两个对象相等](/JS/js-special-object-eq.md)
+  - [JS专题之函数柯里化](/JS/js-special-function-curry.md)
+  - [JS专题之偏函数](/JS/js-special-partial-function.md)
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
