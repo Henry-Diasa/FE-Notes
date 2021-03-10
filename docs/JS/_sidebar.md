@@ -19,6 +19,8 @@
   - [JS专题之函数记忆](/JS/js-special-function-memorize.md)
   - [JS专题之函数递归](/JS/js-special-function-recursion.md)
   - [JS专题之乱序](/JS/js-special-out-of-order.md)
+- ES6
+  - [ES6系列之let和const](/JS/es6-let-const.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
