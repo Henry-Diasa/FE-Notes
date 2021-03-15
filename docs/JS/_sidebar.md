@@ -21,6 +21,10 @@
   - [JS专题之乱序](/JS/js-special-out-of-order.md)
 - ES6
   - [ES6系列之let和const](/JS/es6-let-const.md)  
+  - [ES6系列之模板字符串](/JS/es6-string-template.md)  
+  - [ES6系列之箭头函数](/JS/es6-arrow-function.md)  
+  - [ES6系列之箭头函数](/JS/es6-arrow-function.md)  
+  - [ES6系列之Symbol](/JS/es6-symbol.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
