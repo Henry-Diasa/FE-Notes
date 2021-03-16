@@ -26,6 +26,8 @@
   - [ES6系列之箭头函数](/JS/es6-arrow-function.md)  
   - [ES6系列之Symbol](/JS/es6-symbol.md)  
   - [ES6系列之迭代器与for of](/JS/es6-iterator-for-of.md)  
+  - [ES6系列之模拟set实现](/JS/es6-imitate-set.md)  
+  - [ES6系列之WeakMap](/JS/es6-weakMap.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
