@@ -30,6 +30,8 @@
   - [ES6系列之WeakMap](/JS/es6-weakMap.md)  
   - [ES6系列之Promise](/JS/es6-promise.md)  
   - [ES6系列之Generator](/JS/es6-generator.md)  
+  - [ES6系列之Generator](/JS/es6-generator.md)  
+  - [ES6系列之Babel如何编译Class(上)](/JS/es6-babel-class-1.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
