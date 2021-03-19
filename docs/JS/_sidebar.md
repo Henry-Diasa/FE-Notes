@@ -28,6 +28,8 @@
   - [ES6系列之迭代器与for of](/JS/es6-iterator-for-of.md)  
   - [ES6系列之模拟set实现](/JS/es6-imitate-set.md)  
   - [ES6系列之WeakMap](/JS/es6-weakMap.md)  
+  - [ES6系列之Promise](/JS/es6-promise.md)  
+  - [ES6系列之Generator](/JS/es6-generator.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
