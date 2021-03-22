@@ -38,6 +38,7 @@
   - [ES6系列之defineProperty与proxy](/JS/es6-defineProperty-proxy.md)  
   - [ES6系列之模块加载](/JS/es6-module.md)  
   - [ES6系列之decorator](/JS/es6-decorator.md)  
+  - [ES6系列之私有变量的实现](/JS/es6-private-var.md)  
 - Typescript  
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
