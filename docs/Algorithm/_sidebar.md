@@ -1,0 +1,2 @@
+- 基础内容
+  - [线性查找法](/Algorithm/linearSearch.md)

@@ -1,2 +1,3 @@
 - [前端基础](/JS/js-basic.md)
+- [数据结构与算法](/Algorithm/linearSearch.md)
 - [Node](/Node/basic.md)
