@@ -1,2 +1,3 @@
 - 基础内容
   - [线性查找法](/Algorithm/linearSearch.md)
+  - [基础排序算法](/Algorithm/basicSort.md)
