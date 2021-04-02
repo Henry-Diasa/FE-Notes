@@ -1,6 +1,6 @@
 #### EventLoop的使用
 
-<img src="img/eventloop1.jpg" style="zoom:50%;" />
+<img src="img/JS/eventloop1.jpg" style="zoom:50%;" />
 
 **宏任务**
 
@@ -379,7 +379,7 @@ setInterval(() => {
 - 当在执行用户交互的任务时，将渲染任务的优先级调整到最高
 - 渲染线程完成后将页面解析、定时器等任务优先级提升
 
-![](http://img.zhufengpeixun.cn/requestAnimationFrame.jpg)
+<img src="img/JS/requestAnimationFrame.jpeg" style="zoom:50%;" />
 
 **requestAnimationFrame**
 
@@ -426,9 +426,7 @@ setInterval(() => {
 - 页面是一帧一帧绘制出来的，当每秒绘制的帧数（FPS）达到 60 时，页面是流畅的，小于这个值时，用户会感觉到卡顿
 - 1s 60帧，所以每一帧分到的时间是 1000/60 ≈ 16 ms。所以我们书写代码时力求不让一帧的工作量超过 16ms
 
-![](http://img.zhufengpeixun.cn/farmeimage.png)
-
-****
+<img src="img/JS/farmeimage.png" style="zoom:50%;" />
 
 **requestIdleCallback**
 
@@ -441,7 +439,7 @@ setInterval(() => {
   - timeout。表示超过这个时间后，如果任务还没执行，则强制执行，不必等待空闲
 - requestIdleCallback发生在一帧的最后，此时页面布局已经完成，所以不建议在 requestIdleCallback 里再操作 DOM，这样会导致页面再次重绘,DOM 操作建议在 rAF 中进行
 
-![](http://img.zhufengpeixun.cn/idlecallback.png)
+<img src="img/JS/idlecallback.png" style="zoom:50%;" />
 
 ```javascript
 var handle = window.requestIdleCallback(callback[, options])
@@ -504,9 +502,9 @@ var handle = window.requestIdleCallback(callback[, options])
 - 执行所有的微任务，先执行nextTick中的所有的任务，再执行其它微任务
 - 开始执行宏任务，共有6个阶段，从第1个阶段开始，会执行每一个阶段所有的宏任务
 
-![](http://img.zhufengpeixun.cn/nodelibuv2.jpg)
+<img src="img/JS/nodelibuv2.jpeg" style="zoom:50%;" />
 
-![](img/nodeeventloop.jpeg)
+<img src="img/JS/nodeeventloop.jpeg" style="zoom:50%;" />
 
 **setImmediate**
 
