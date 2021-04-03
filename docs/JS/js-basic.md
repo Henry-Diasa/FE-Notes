@@ -37,7 +37,8 @@
 
 > 每一个`JavaScript对象`(null除外)在创建的时候就会与之关联`另一个对象`，这个对象就是我们所说的`原型`，每一个对象都会从原型`"继承"`属性。
 
-![构造函数与实例原型关系](https://github.com/mqyqingfeng/Blog/raw/master/Images/prototype1.png)
+
+<img src="img/JS/prototype1.png" />
 
 #### `__proto__`
 
@@ -51,7 +52,8 @@ var person = new Person();
 console.log(person.__proto__ === Person.prototype); // true
 ```
 
-![更新关系图](https://github.com/mqyqingfeng/Blog/raw/master/Images/prototype2.png)
+
+<img src="img/JS/prototype2.png" />
 
 既然实例对象和构造函数都可以指向原型，那么原型是否有属性指向构造函数或者实例呢？
 
@@ -66,7 +68,8 @@ function Person() {
 console.log(Person === Person.prototype.constructor); // true
 ```
 
-![](https://github.com/mqyqingfeng/Blog/raw/master/Images/prototype3.png)
+
+<img src="img/JS/prototype3.png" />
 
 综上得出
 
@@ -115,7 +118,8 @@ console.log(obj.name) // Kevin
 
 其实`原型对象`就是通过 `Object 构造函数`生成的，结合之前所讲，实例的 `__proto__` 指向构造函数的 prototype ，所以我们再更新下关系图
 
-![](https://github.com/mqyqingfeng/Blog/raw/master/Images/prototype4.png)
+
+<img src="img/JS/prototype4.png" />
 
 #### 原型链
 
@@ -131,7 +135,8 @@ console.log(Object.prototype.__proto__ === null) // true
 
 所以 `Object.prototype.__proto__ `的值为 null 跟 Object.prototype 没有原型，其实表达了一个意思
 
-![](https://github.com/mqyqingfeng/Blog/raw/master/Images/prototype5.png)
+
+<img src="img/JS/prototype5.png" />
 
 图中由相互关联的原型组成的链状结构就是原型链，也就是蓝色的这条线
 
