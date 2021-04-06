@@ -46,3 +46,9 @@
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
   - [Typescript其他](/JS/ts-other.md)
+- 异常处理
+  - [异步场景下的异常处理](/JS/async-error-handle.md)
+- 插件机制
+  - [插件机制](/JS/plug-in-mechanism.md) 
+- 代码规范
+  - [clean-code-javascript](/JS/clean-code-javascript.md)  
