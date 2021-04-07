@@ -29,6 +29,7 @@
   - [ES6系列之模拟set实现](/JS/es6-imitate-set.md)  
   - [ES6系列之WeakMap](/JS/es6-weakMap.md)  
   - [ES6系列之Promise](/JS/es6-promise.md)  
+  - [ES6系列之Promise的实现](/JS/es6-promise-plus.md)  
   - [ES6系列之Generator](/JS/es6-generator.md)  
   - [ES6系列之async](/JS/es6-async.md)  
   - [ES6系列之异步处理实战](/JS/es6-async-practice.md)  
@@ -45,3 +46,9 @@
   - [Typescript基础](/JS/ts-basic.md)
   - [Typescript进阶](/JS/ts-advance.md)
   - [Typescript其他](/JS/ts-other.md)
+- 异常处理
+  - [异步场景下的异常处理](/JS/async-error-handle.md)
+- 插件机制
+  - [插件机制](/JS/plug-in-mechanism.md) 
+- 代码规范
+  - [clean-code-javascript](/JS/clean-code-javascript.md)  
