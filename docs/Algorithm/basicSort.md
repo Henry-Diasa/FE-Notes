@@ -14,7 +14,7 @@
 
 arr[i,n)未排序 arr[0,i) 已排序  （**循环不变量**）
 
-arr[i,n)中的最小值要放到arr[i]的位置
+arr[i,n) 中的最小值要放到arr[i]的位置
 
 ```javascript
 const selectSort = (arr) => {

@@ -56,7 +56,178 @@ class ArrayStack {
 }
 ```
 
-[有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
+#### 栈的例题分析
+
+**判断字符串括号是否合法**
+
+> 【题目】字符串中只有字符'('和')'。合法字符串需要括号可以配对。比如：
+>
+> 输入："()"
+>
+> 输出：true
+>
+> 解释：()，()()，(())是合法的。)(，()(，(()是非法的。
+>
+> 请你实现一个函数，来判断给定的字符串是否合法
+
+首先，分析题目的时候，要特别注意以下 4 点，归纳为“四步分析法”。
+
+- 模拟：模拟题目的运行。
+
+- 规律：尝试总结出题目的一般规律和特点。
+
+- 匹配：找到符合这些特点的数据结构与算法。
+
+- 边界：考虑特殊情况。
+
+通过模拟可以得出如下规律
+
+- 每个左括号'('或者右括号')'都完成配对，才是合法的
+- 配对可以通过**消除法**来消掉合法的括号，如果最后没有任何字符了，那么就是合法字符串
+- 奇数长度的字符串总是非法的。
+- 同时可以看出每次消除的时候都是把最近的匹配的一项消除掉。也就是满足栈的特点
+
+最后还需要考虑一些边界情况
+
+- 字符串为空
+- 字符串只有 1 个或者奇数个
+- 字符串是"(((())))"嵌套很多层的是否可以处理
+
+最后可以写出如下代码
+
+```java
+boolean isValid(String s) {
+
+  // 当字符串本来就是空的时候，我们可以快速返回true
+
+  if (s == null || s.length() == 0) {
+
+    return true;
+
+  }
+
+  // 当字符串长度为奇数的时候，不可能是一个有效的合法字符串
+
+  if (s.length() % 2 == 1) {
+
+    return false;
+
+  }
+
+  // 消除法的主要核心逻辑: 
+
+  Stack<Character> t = new Stack<Character>();
+
+  for (int i = 0; i < s.length(); i++) {
+
+    // 取出字符
+
+    char c = s.charAt(i);
+
+    if (c == '(') {
+
+      // 如果是'('，那么压栈
+
+      t.push(c);
+
+    } else if (c == ')') {
+
+      // 如果是')'，那么就尝试弹栈
+
+      if (t.empty()) {
+
+        // 如果弹栈失败，那么返回false
+
+        return false;
+
+      }
+
+      t.pop();
+
+    }
+
+
+
+  return t.empty();
+
+}
+
+```
+
+**复杂度分析**：每个字符只入栈一次，出栈一次，所以时间复杂度为 O(N)，而空间复杂度为 O(N)，因为最差情况下可能会把整个字符串都入栈。
+
+**1. 深度扩展**
+
+如果仔细观察，你会发现，栈中存放的元素是一样的。全部都是左括号'('，除此之外，再也没有别的元素，优化方法如下。
+
+**栈中元素都相同时，实际上没有必要使用栈，只需要记录栈中元素个数**
+
+```java
+public boolean isValid(String s) {
+
+  // 当字符串本来就是空的时候，我们可以快速返回true
+
+  if (s == null || s.length() == 0) {
+
+    return true;
+
+  }
+
+  // 当字符串长度为奇数的时候，不可能是一个有效的合法字符串
+
+  if (s.length() % 2 == 1) {
+
+    return false;
+
+  }
+
+  // 消除法的主要核心逻辑:
+
+  int leftBraceNumber = 0;
+
+  for (int i = 0; i < s.length(); i++) {
+
+    // 取出字符
+
+    char c = s.charAt(i);
+
+    if (c == '(') {
+
+      // 如果是'('，那么压栈
+
+      leftBraceNumber++;
+
+    } else if (c == ')') {
+
+      // 如果是')'，那么就尝试弹栈
+
+      if (leftBraceNumber <= 0) {
+
+        // 如果弹栈失败，那么返回false
+
+        return false;
+
+      }
+
+      --leftBraceNumber;
+
+    }
+
+  }
+
+  return leftBraceNumber == 0;
+
+}
+
+```
+
+**复杂度分析**：每个字符只入栈一次，出栈一次，所以时间复杂度为 O(N)，而空间复杂度为 O(1)，因为我们已经只用一个变量来记录栈中的内容。
+
+【**小结**】经过前面的分析，现在我们可以将题目的特点做一下小结：
+
+![](https://s0.lgstatic.com/i/image6/M00/0B/77/Cgp9HWA4ny2ASkpXAABGeRYQOyU298.png)
+
+
 
 #### 队列 Queue
 
@@ -68,7 +239,7 @@ class ArrayStack {
 >
 > 队列是一种先进先出的数据结构（First In First Out FIFO）
 
-#### 队列是实现
+#### 队列实现
 
 ```javascript
 class ArrayQueue {
@@ -137,6 +308,10 @@ function loopQueue(len){
   }
 }
 ```
+
+#### leetcode的一些题目
+
+[有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
 
 [用队列实现栈](https://leetcode-cn.com/problems/implement-stack-using-queues/)
 
