@@ -1096,7 +1096,7 @@ class Solution {
 
 **思考题**
 
-#### [填充每个节点的下一个右侧节点指针 II](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node-ii/)
+**[填充每个节点的下一个右侧节点指针 II](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node-ii/)**
 
 ![](https://s0.lgstatic.com/i/image6/M00/11/0C/Cgp9HWA_SC2AdwWAAADBBGybQP0811.png)
 
@@ -1493,8 +1493,6 @@ pre = (i - 1 + capacity) % capacity
 
 #### 单调队列
 
-### 单调队列
-
 单调队列属于**双端队列**的一种。双端队列与 FIFO 队列的区别在于：
 
 - FIFO 队列只能从尾部添加元素，首部弹出元素；
@@ -1808,7 +1806,7 @@ class Solution {
 
 **思考题**
 
-#### [跳跃游戏 VI](https://leetcode-cn.com/problems/jump-game-vi/)
+**[跳跃游戏 VI](https://leetcode-cn.com/problems/jump-game-vi/)**
 
 ![](https://s0.lgstatic.com/i/image6/M00/11/10/CioPOWA_TLCATeR6AAFTfMBlaiw858.png)
 
