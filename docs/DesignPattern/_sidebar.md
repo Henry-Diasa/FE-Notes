@@ -3,3 +3,5 @@
   - [原型模式](/DesignPattern/创建型/原型模式.md)
   - [工厂模式之抽象工厂](/DesignPattern/创建型/工厂模式之抽象工厂.md)
   - [工厂模式之简单工厂](/DesignPattern/创建型/工厂模式之简单工厂.md)
+- 结构型
+  - [装饰器模式](/DesignPattern/结构型/装饰器模式.md)
