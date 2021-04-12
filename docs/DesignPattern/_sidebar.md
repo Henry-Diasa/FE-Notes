@@ -5,3 +5,10 @@
   - [工厂模式之简单工厂](/DesignPattern/创建型/工厂模式之简单工厂.md)
 - 结构型
   - [装饰器模式](/DesignPattern/结构型/装饰器模式.md)
+  - [适配器模式](/DesignPattern/结构型/适配器模式.md)
+  - [代理模式](/DesignPattern/结构型/代理模式.md)
+- 行为型
+  - [策略模式](/DesignPattern/行为型/策略模式.md)
+  - [状态模式](/DesignPattern/行为型/状态模式.md)
+  - [观察者模式](/DesignPattern/行为型/观察者模式.md)
+  - [迭代器模式](/DesignPattern/行为型/迭代器模式.md)
