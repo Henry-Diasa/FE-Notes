@@ -65,5 +65,81 @@ function remove(item) {
 }
 ```
 
+#### 双向链表
 
+> 尽管从链表的头节点遍历到尾节点很简单，但反过来，从后向前遍历则没那么简单。通过 给 Node 对象增加一个属性，该属性存储指向前驱节点的链接，这样就容易多了
+
+```js
+// Node类
+function Node(element) {
+  this.element = element;
+  this.next = null;
+  this.previous = null; // 前置节点
+}
+
+function insert(newElement, item) {
+  let newNode = new Node(newElement);
+  let current = this.find(item);
+  newNode.next = current.next;
+  newNode.previous = current;
+  current.next = newNode;
+  newNode.next.previous = newNode;
+}
+
+function remove(item) {
+  let currNode = this.find(item);
+  if(currNode.next!==null) {
+    currNode.previous.next = currNode.next;
+    currNode.next.previous = currNode.previous;
+    currNode.next = null;
+    currNode.previous = null;
+  }
+}
+
+function findLast() {
+  let currNode = this.head;
+  while (!(currNode.next == null)) {
+    currNode = currNode.next;
+  }
+  return currNode;
+}
+
+function dispReverse() {
+  let currNode = this.head;
+  currNode = this.findLast();
+  while (!(currNode.previous == null)) {
+    console.log(currNode.element);
+    currNode = currNode.previous; 
+  }
+}
+
+```
+
+#### 循环链表
+
+> 循环链表和单向链表相似，节点类型都是一样的。唯一的区别是，在创建循环链表时，让其头节点的 next 属性指向它本身
+
+```js
+function LList() {
+  this.head = new Node("head"); 
+  this.head.next = this.head; 
+  this.find = find;
+  this.insert = insert; 
+  this.display = display; 
+  this.findPrevious = findPrevious; 
+  this.remove = remove;
+}
+```
+
+只需要修改一处，就将单向链表变成了循环链表。但是其他一些方法需要修改才能工作正 常。比如，display() 就需要修改，原来的方式在循环链表里会陷入死循环。while 循环的 循环条件需要修改，需要检查头节点，当循环到头节点时退出循环。
+
+```js
+function display() {
+	let currNode = this.head;
+	while (!(currNode.next == null) &&
+!(currNode.next.element == "head")) {
+    console.log(currNode.next.element);
+		currNode = currNode.next;
+} }
+```
 
