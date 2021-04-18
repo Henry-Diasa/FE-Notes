@@ -3,3 +3,4 @@
   - [基础排序算法](/Algorithm/basicSort.md)
   - [数据结构基础](/Algorithm/basicDataStruct.md)
   - [链表](/Algorithm/linkedList.md)
+  - [归并排序](/Algorithm/mergeSort.md)
