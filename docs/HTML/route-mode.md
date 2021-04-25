@@ -1,0 +1,1 @@
+[前端路由模式](https://blog.csdn.net/Charissa2017/article/details/104779412)

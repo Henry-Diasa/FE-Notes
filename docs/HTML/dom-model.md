@@ -1,0 +1,1 @@
+[事件模型](https://javascript.ruanyifeng.com/dom/event.html#toc14)

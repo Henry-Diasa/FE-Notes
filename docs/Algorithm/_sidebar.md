@@ -4,3 +4,4 @@
   - [数据结构基础](/Algorithm/basicDataStruct.md)
   - [链表](/Algorithm/linkedList.md)
   - [归并排序](/Algorithm/mergeSort.md)
+  - [快读排序](/Algorithm/quickSort.md)

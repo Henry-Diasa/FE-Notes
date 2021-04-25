@@ -1,3 +1,6 @@
 - HTML基础
   - [行内元素和块级元素](/HTML/inline-block.md)
   - [跨页面通信](/HTML/cross-page-contact.md)
+  - [前端路由模式](/HTML/route-mode.md)
+  - [DOM树](/HTML/dom-tree.md)
+  - [事件模型](/HTML/dom-model.md)
