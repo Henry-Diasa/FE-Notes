@@ -4,3 +4,6 @@
   - [前端路由模式](/HTML/route-mode.md)
   - [DOM树](/HTML/dom-tree.md)
   - [事件模型](/HTML/dom-model.md)
+  - [缓存策略](/HTML/cache.md)
+  - [浏览器原理](/HTML/browser-principles.md)
+  - [内存泄漏](/HTML/memory-leak.md)

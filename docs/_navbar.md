@@ -1,5 +1,5 @@
 - [前端基础](/JS/js-basic.md)
-- [HTML](/HTML/inline-block.md)
+- [HTML & 浏览器](/HTML/inline-block.md)
 - [CSS](/CSS/boxModel.md)
 - [数据结构与算法](/Algorithm/linearSearch.md)
 - [设计模式](/DesignPattern/创建型/单例模式.md)
