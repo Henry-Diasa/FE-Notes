@@ -109,4 +109,30 @@ function quicksort(arr, l, r) {
 
 #### 双路快排
 
-> partition的定义，arr[l+1,i-1] < v    arr[j+1,r] > v
+> partition的定义，arr[l+1,i-1] <=v    arr[j+1,r] >= v，和上面的partition的不同是，两个区间放到了数组的两侧
+
+```js
+function partition2(arr, l, r) {
+	// 取[l,r]之间的随机数，然后和l的值进行交换
+  let p = Math.floor(Math.randow() * [r - l + 1]) + l;
+  swap(arr,l,p);
+  // arr[l+1,i-1] <=v    arr[j+1,r] >= v
+  let i = l+1;
+  let j = r;
+  while(true) {
+    while(i<=j && arr[i] < arr[l]) {
+      i++;
+    }
+    while(j>=i && arr[j] > arr[l]) {
+      j--;
+    }
+    if(i>=j) break;
+    swap(arr, i, j);
+    i++;
+    j--;
+  }
+  swap(arr, l, j);
+  return j;
+}
+```
+
