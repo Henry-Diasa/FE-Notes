@@ -136,3 +136,43 @@ function partition2(arr, l, r) {
 }
 ```
 
+如上，当所有的元素相同是，partition之后的左右两侧的数组仍然是相同的，还是需要在进行排序，显示是没有必要的。这就引入了 **三路快排**的思想
+
+#### 三路快排
+
+> arr[l+1,lt] < v, arr[lt+1, i-1] == v, arr[gt, r] > v  分为三个区域，可以将复杂度降低为O(n)
+
+```js
+function partition(arr, l, r) {
+	let lt = l,i = l+1, gt = r + 1;
+  while(i < gt) {
+    if(arr[i] < arr[l]) {
+      lt++;
+      swap(arr,i,lt);
+      i++
+    }else if(arr[i] > arr[l]) {
+      gt--;
+      swap(arr,i,gt)
+    }else{ // arr[i] == arr[l]
+      i++;
+    }
+  }
+  swap(arr,l,lt);
+  // arr[l,lt-1] < v, arr[lt, gt-1] == v, arr[gt, r] > v
+  
+  return {
+    lt,
+    gt
+  }
+}
+
+function quickSort(arr, l, r) {
+  // ...
+  
+  quickSort(arr, l, lt-1);
+  quickSort(arr, gt, r);
+}
+```
+
+[颜色分类](https://leetcode-cn.com/problems/sort-colors/)
+
