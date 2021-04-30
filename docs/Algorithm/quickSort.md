@@ -176,3 +176,7 @@ function quickSort(arr, l, r) {
 
 [颜色分类](https://leetcode-cn.com/problems/sort-colors/)
 
+[数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+
+[最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+
