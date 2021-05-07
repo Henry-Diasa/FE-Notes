@@ -1,3 +1,9 @@
 - 性能优化
   - [V8垃圾回收](/Performance/V8.md)
   - [前端性能优化指标RAIL](/Performance/RAIL.md)
+  - [前端性能优化手段](/Performance/method.md)
+  - [重排和重绘](/Performance/repaint.md)
+  - [白屏时间](/Performance/whitescreen.md)
+  - [网页图片加载优化](/Performance/imgoptimize.md)
+  - [前端浏览器动画性能优化](/Performance/animateoptimize.md)
+  - [浏览器渲染流程 & composite](/Performance/composite.md)
