@@ -7,3 +7,4 @@
   - [快读排序](/Algorithm/quickSort.md)
   - [二分查找](/Algorithm/binarySearch.md)
   - [树](/Algorithm/tree.md)
+  - [堆](/Algorithm/heap.md)
