@@ -225,3 +225,149 @@
 
 - `mate`标签中的 `viewport`属性 ，`initial-scale` 设置为 `0.5`
 - `rem` 按照设计稿标准走即可
+
+```html
+<!DOCTYPE html>  <!--H5标准声明，使用 HTML5 doctype，不区分大小写-->
+<head lang=”en”> <!--标准的 lang 属性写法-->
+<meta charset=’utf-8′>    <!--声明文档使用的字符编码-->
+<meta http-equiv=”X-UA-Compatible” content=”IE=edge,chrome=1″/>   <!--优先使用 IE 最新版本和 Chrome-->
+<meta name=”description” content=”不超过150个字符”/>       <!--页面描述-->
+<meta name=”keywords” content=””/>     <!-- 页面关键词-->
+<meta name=”author” content=”name, email@gmail.com”/>    <!--网页作者-->
+<meta name=”robots” content=”index,follow”/>      <!--搜索引擎抓取-->
+<meta name=”viewport” content=”initial-scale=1, maximum-scale=3, minimum-scale=1, user-scalable=no”> <!--为移动设备添加 viewport-->
+<meta name=”apple-mobile-web-app-title” content=”标题”> <!--iOS 设备 begin-->
+<meta name=”apple-mobile-web-app-capable” content=”yes”/>  <!--添加到主屏后的标题（iOS 6 新增）
+是否启用 WebApp 全屏模式，删除苹果默认的工具栏和菜单栏-->
+<meta name=”apple-itunes-app” content=”app-id=myAppStoreID, affiliate-data=myAffiliateData, app-argument=myURL”>
+<!--添加智能 App 广告条 Smart App Banner（iOS 6+ Safari）-->
+<meta name=”apple-mobile-web-app-status-bar-style” content=”black”/>
+<meta name=”format-detection” content=”telphone=no, email=no”/>  <!--设置苹果工具栏颜色-->
+<meta name=”renderer” content=”webkit”> <!-- 启用360浏览器的极速模式(webkit)-->
+<meta http-equiv=”X-UA-Compatible” content=”IE=edge”>     <!--避免IE使用兼容模式-->
+<meta http-equiv=”Cache-Control” content=”no-siteapp” />    <!--不让百度转码-->
+<meta name=”HandheldFriendly” content=”true”>     <!--针对手持设备优化，主要是针对一些老的不识别viewport的浏览器，比如黑莓-->
+<meta name=”MobileOptimized” content=”320″>   <!--微软的老式浏览器-->
+<meta name=”screen-orientation” content=”portrait”>   <!--uc强制竖屏-->
+<meta name=”x5-orientation” content=”portrait”>    <!--QQ强制竖屏-->
+<meta name=”full-screen” content=”yes”>              <!--UC强制全屏-->
+<meta name=”x5-fullscreen” content=”true”>       <!--QQ强制全屏-->
+<meta name=”browsermode” content=”application”>   <!--UC应用模式-->
+<meta name=”x5-page-mode” content=”app”>   <!-- QQ应用模式-->
+<meta name=”msapplication-tap-highlight” content=”no”>    <!--windows phone 点击无高亮
+设置页面不缓存-->
+<meta http-equiv=”pragma” content=”no-cache”>
+<meta http-equiv=”cache-control” content=”no-cache”>
+<meta http-equiv=”expires” content=”0″>
+```
+
+#### 渐进增强和优雅降级
+
+- 渐进增强：针对低版本浏览器进行构建页面，保证最基本的功能，然后再针对高级浏览器进行效果、交互等改进和追加功能达到更好的用户体验。
+- 优雅降级：一开始就构建完整的功能，然后再针对低版本浏览器进行兼容。
+
+> 区别：优雅降级是从复杂的现状开始，并试图减少用户体验的供给，而渐进增强则是从一个非常基础的，能够起作用的版本开始，并不断扩充，以适应未来环境的需要。降级（功能衰减）意味着往回看；而渐进增强则意味着朝前看，同时保证其根基处于安全地带
+
+#### src与href
+
+- `src`用于替换当前元素，href用于在当前文档和引用资源之间确立联系。
+- `src`是`source`的缩写，指向外部资源的位置，指向的内容将会嵌入到文档中当前标签所在位置；在请求`src`资源时会将其指向的资源下载并应用到文档内，例如`js`脚本，`img`图片和`frame`等元素
+
+> <script src ="js.js"></script> 当浏览器解析到该元素时，会暂停其他资源的下载和处理，直到将该资源加载、编译、执行完毕，图片和框架等元素也如此，类似于将所指向资源嵌入当前标签内。这也是为什么将js脚本放在底部而不是头部
+
+- `href`是`Hypertext Reference`的缩写，指向网络资源所在位置，建立和当前元素（锚点）或当前文档（链接）之间的链接，如果我们在文档中添加
+- `<link href="common.css" rel="stylesheet"/>`那么浏览器会识别该文档为`css`文件，就会并行下载资源并且不会停止对当前文档的处理。这也是为什么建议使用`link`方式来加载`css`，而不是使用`@import`方式
+
+#### 网页制作会用到的图片格式
+
+- `png-8`、`png-24`、`jpeg`、`gif`、`svg`
+
+> 但是上面的那些都不是面试官想要的最后答案。面试官希望听到是`Webp`,`Apng`。（是否有关注新技术，新鲜事物）
+
+- **Webp**：`WebP`格式，谷歌（google）开发的一种旨在加快图片加载速度的图片格式。图片压缩体积大约只有`JPEG`的`2/3`，并能节省大量的服务器带宽资源和数据空间。`Facebook Ebay`等知名网站已经开始测试并使用`WebP`格式。
+- 在质量相同的情况下，WebP格式图像的体积要比JPEG格式图像小`40%`。
+- **Apng**：全称是`“Animated Portable Network Graphics”`, 是PNG的位图动画扩展，可以实现png格式的动态图片效果。04年诞生，但一直得不到各大浏览器厂商的支持，直到日前得到 `iOS safari 8`的支持，有望代替`GIF`成为下一代动态图标准
+
+#### 大量图片加载优化
+
+- 图片懒加载，在页面上的未可视区域可以添加一个滚动事件，判断图片位置与浏览器顶端的距离与页面的距离，如果前者小于后者，优先加载。
+- 如果为幻灯片、相册等，可以使用图片预加载技术，将当前展示图片的前一张和后一张优先下载。
+- 如果图片为css图片，可以使用`CSSsprite`，`SVGsprite`，`Iconfont`、`Base64`等技术。
+- 如果图片过大，可以使用特殊编码的图片，加载时会先加载一张压缩的特别厉害的缩略图，以提高用户体验。
+- 如果图片展示区域小于图片的真实大小，则因在服务器端根据业务需要先行进行图片压缩，图片压缩后大小与展示一致。
+
+#### web开发中会话跟踪的方法
+
+- `cookie`
+- `session`
+- `url`重写
+- 隐藏`input`
+- `ip`地址
+
+#### HTTP Request和Response报文
+
+**Request**
+
+1. 首行是**Request-Line**包括：**请求方法**，**请求URI**，**协议版本**，**CRLF**
+2. 首行之后是若干行**请求头**，包括**general-header**，**request-header**或者**entity-header**，每个一行以CRLF结束
+3. 请求头和消息实体之间有一个**CRLF分隔**
+4. 根据实际请求需要可能包含一个**消息实体** 一个请求报文例子如下：
+
+```http
+GET /Protocols/rfc2616/rfc2616-sec5.html HTTP/1.1
+Host: www.w3.org
+Connection: keep-alive
+Cache-Control: max-age=0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36
+Referer: https://www.google.com.hk/
+Accept-Encoding: gzip,deflate,sdch
+Accept-Language: zh-CN,zh;q=0.8,en;q=0.6
+Cookie: authorstyle=yes
+If-None-Match: "2cc8-3e3073913b100"
+If-Modified-Since: Wed, 01 Sep 2004 13:24:52 GMT
+
+name=qiu&age=25
+```
+
+**Response**
+
+- 首行是状态行包括：**HTTP版本，状态码，状态描述**，后面跟一个CRLF
+- 首行之后是**若干行响应头**，包括：**通用头部，响应头部，实体头部**
+- 响应头部和响应实体之间用**一个CRLF空行**分隔
+- 最后是一个可能的**消息实体** 响应报文例子如下：
+
+```http
+HTTP/1.1 200 OK
+Date: Tue, 08 Jul 2014 05:28:43 GMT
+Server: Apache/2
+Last-Modified: Wed, 01 Sep 2004 13:24:52 GMT
+ETag: "40d7-3e3073913b100"
+Accept-Ranges: bytes
+Content-Length: 16599
+Cache-Control: max-age=21600
+Expires: Tue, 08 Jul 2014 11:28:43 GMT
+P3P: policyref="http://www.w3.org/2001/05/P3P/p3p.xml"
+Content-Type: text/html; charset=iso-8859-1
+
+{"name": "qiu", "age": 25}
+```
+
+#### Cookie的弊端
+
+> `cookie`虽然在持久保存客户端数据提供了方便，分担了服务器存储的负担，但还是有很多局限性的
+
+- 每个特定的域名下最多生成`20`个`cookie`
+- `IE6`或更低版本最多`20`个`cookie`
+- `IE7`和之后的版本最后可以有`50`个`cookie`
+- `Firefox`最多50个`cookie`
+- `chrome`和`Safari`没有做硬性限制
+- IE 和 Opera 会清理近期最少使用的 `cookie`，`Firefox` 会随机清理 `cookie`
+- `cookie` 的最大大约为 `4096` 字节，为了兼容性，一般设置不超过 `4095` 字节
+- 如果 `cookie` 被人拦截了，就可以取得所有的 `session` 信息
+
+#### git fetch和git pull的区别
+
+- `git pull`：相当于是从远程获取最新版本并`merge`到本地
+- `git fetch`：相当于是从远程获取最新版本到本地，不会自动`merge`
+
