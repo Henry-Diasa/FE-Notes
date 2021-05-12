@@ -410,6 +410,121 @@ html结构
 
 > `transform:scale()`这个属性只可以缩放可以定义宽高的元素，而行内元素是没有宽高的，我们可以加上一个`display:inline-block`;
 
-```text
+```css
 transform: scale(0.7);
+```
+
+#### CSS选择符有哪些？哪些属性可以继承
+
+- id选择器（ `# myid`）
+- 类选择器（`.myclassname`）
+- 标签选择器（`div`, `h1`, `p`）
+- 相邻选择器（`h1 + p`） 后面第一个相邻
+- 子选择器（`ul > li`）
+- 后代选择器（`li a`）
+- 通配符选择器（ `*` ）
+- 属性选择器（`a[rel = "external"]`）
+- 伪类选择器（`a:hover, li:nth-child`）
+
+**CSS哪些属性可以继承？哪些属性不可以继承**
+
+- 可继承的样式： `font-size font-family color, UL LI DL DD DT`
+- 不可继承的样式：`border padding margin width height`
+
+#### 用纯CSS创建一个三角形的原理是什么
+
+```css
+/* 把上、左、右三条边隐藏掉（颜色设为 transparent） */
+#demo {
+  width: 0;
+  height: 0;
+  border-width: 20px;
+  border-style: solid;
+  border-color: transparent transparent red transparent;
+}
+```
+
+#### 请列举几种隐藏元素的方法
+
+- `visibility: hidden;` 这个属性只是简单的隐藏某个元素，但是元素占用的空间任然存在
+- `opacity: 0;` `CSS3`属性，设置`0`可以使一个元素完全透明
+- `position: absolute;` 设置一个很大的 `left` 负值定位，使元素定位在可见区域之外
+- `display: none;` 元素会变得不可见，并且不会再占用文档的空间。
+- `transform: scale(0);` 将一个元素设置为缩放无限小，元素将不可见，元素原来所在的位置将被保留
+- `<div hidden="hidden">` HTML5属性,效果和`display:none;`相同，但这个属性用于记录一个元素的状态
+- `height: 0;` 将元素高度设为 `0` ，并消除边框
+- `filter: blur(0);` CSS3属性，将一个元素的模糊度设置为`0`，从而使这个元素“消失”在页面中
+
+#### 经常遇到的浏览器的JS兼容性有哪些？解决方法是什么
+
+- 当前样式：`getComputedStyle(el, null) VS el.currentStyle`
+- 事件对象：`e VS window.event`
+- 鼠标坐标：`e.pageX, e.pageY VS window.event.x, window.event.y`
+- 按键码：`e.which VS event.keyCode`
+- 文本节点：`el.textContent VS el.innerText`
+
+#### 浏览器是怎样解析CSS选择器的
+
+- 浏览器解析 CSS 选择器的方式是从右到左
+
+#### 抽离样式模块怎么写，说出思路
+
+- CSS可以拆分成2部分：公共CSS 和 业务CSS：
+  - 网站的配色，字体，交互提取出为公共CSS。这部分CSS命名不应涉及具体的业务
+  - 对于业务CSS，需要有统一的命名，使用公用的前缀。可以参考面向对象的CSS
+
+#### 元素竖向的百分比设定是相对于容器的高度吗
+
+> 元素竖向的百分比设定是相对于**容器的宽度**，而不是高度
+
+#### 什么是响应式设计？响应式设计的基本原理是什么？如何兼容低版本的IE
+
+- 响应式设计就是网站能够兼容多个终端，而不是为每个终端做一个特定的版本
+- 基本原理是利用CSS3媒体查询，为不同尺寸的设备适配不同样式
+- 对于低版本的IE，可采用JS获取屏幕宽度，然后通过resize方法来实现兼容：
+
+```js
+$(window).resize(function () {
+  screenRespond();
+});
+screenRespond();
+function screenRespond(){
+var screenWidth = $(window).width();
+if(screenWidth <= 1800){
+  $("body").attr("class", "w1800");
+}
+if(screenWidth <= 1400){
+  $("body").attr("class", "w1400");
+}
+if(screenWidth > 1800){
+  $("body").attr("class", "");
+}
+}
+```
+
+#### a标签上四个伪类的执行顺序是怎么样的
+
+> ```
+> link > visited > hover > active
+> ```
+
+- `L-V-H-A` `love hate` 用喜欢和讨厌两个词来方便记忆
+
+#### 伪元素和伪类的区别和作用
+
+- 伪元素 -- 在内容元素的前后插入额外的元素或样式，但是这些元素实际上并不在文档中生成。
+- 它们只在外部显示可见，但不会在文档的源代码中找到它们，因此，称为“伪”元素。例如：
+
+```css
+p::before {content:"第一章：";}
+p::after {content:"Hot!";}
+p::first-line {background:red;}
+p::first-letter {font-size:30px;}
+```
+
+- 伪类 -- 将特殊的效果添加到特定选择器上。它是已有元素上添加类别的，不会产生新的元素。例如：
+
+```css
+a:hover {color: #FF00FF}
+p:first-child {color: red}
 ```
