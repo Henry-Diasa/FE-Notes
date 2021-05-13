@@ -528,3 +528,72 @@ p::first-letter {font-size:30px;}
 a:hover {color: #FF00FF}
 p:first-child {color: red}
 ```
+
+#### 如何修改Chrome记住密码后自动填充表单的黄色背景
+
+- 产生原因：由于Chrome默认会给自动填充的input表单加上 `input:-webkit-autofill` 私有属性造成的
+- 解决方案1：在form标签上直接关闭了表单的自动填充：`autocomplete="off"`
+- 解决方案2：`input:-webkit-autofill { background-color: transparent; }`
+
+**input [type=search] 搜索框右侧小图标如何美化？**
+
+```css
+input[type="search"]::-webkit-search-cancel-button{
+  -webkit-appearance: none;
+  height: 15px;
+  width: 15px;
+  border-radius: 8px;
+  background:url("images/searchicon.png") no-repeat 0 0;
+  background-size: 15px 15px;
+}
+```
+
+#### 网站图片文件，如何点击下载？而非点击预览
+
+```html
+<a href="logo.jpg" download>下载</a>
+<a href="logo.jpg" download="网站LOGO" >下载</a>
+```
+
+#### iOS safari 如何阻止“橡皮筋效果”
+
+```js
+  $(document).ready(function(){
+      var stopScrolling = function(event) {
+          event.preventDefault();
+      }
+      document.addEventListener('touchstart', stopScrolling, false);
+      document.addEventListener('touchmove', stopScrolling, false);
+  });
+```
+
+#### line-height 三种赋值方式有何区别？（带单位、纯数字、百分比）
+
+- 带单位：`px` 是固定值，而 `em` 会参考父元素 `font-size` 值计算自身的行高
+- 纯数字：会把比例传递给后代。例如，父级行高为 `1.5`，子元素字体为 `18px`，则子元素行高为 `1.5 * 18 = 27px`
+- 百分比：将计算后的值传递给后代
+
+#### 让页面里的字体变清晰，变细用CSS怎么做？（IOS手机浏览器字体齿轮设置）
+
+```css
+  -webkit-font-smoothing: antialiased;
+```
+
+#### font-style 属性 oblique 是什么意思
+
+> `font-style: oblique;` 使没有 `italic` 属性的文字实现倾斜
+
+#### 设置元素浮动后，该元素的 display 值会如何变化
+
+> 设置元素浮动后，该元素的 `display` 值自动变成 `block`
+
+#### 一个高度自适应的div，里面有两个div，一个高度100px，希望另一个填满剩下的高度
+
+- 方案1：
+  - `.sub { height: calc(100%-100px); }`
+- 方案2：
+  - `.container { position:relative; }`
+  - `.sub { position: absolute; top: 100px; bottom: 0; }`
+- 方案3：
+  - `.container { display:flex; flex-direction:column; }`
+  - `.sub { flex:1; }`
