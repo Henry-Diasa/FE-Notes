@@ -6,5 +6,6 @@
   - [归并排序](/Algorithm/mergeSort.md)
   - [快读排序](/Algorithm/quickSort.md)
   - [二分查找](/Algorithm/binarySearch.md)
+  - [冒泡排序和希尔排序](/Algorithm/bubble.md)
   - [树](/Algorithm/tree.md)
   - [堆](/Algorithm/heap.md)
