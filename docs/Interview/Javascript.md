@@ -594,3 +594,128 @@ console.log(unique(arr));
 [...new Set(arr)]
 //代码就是这么少----（其实，严格来说并不算是一种，相对于第一种方法来说只是简化了代码）
 ```
+
+#### 使用js实现一个持续的动画效果
+
+**定时器思路**
+
+```js
+var e = document.getElementById('e')
+var flag = true;
+var left = 0;
+setInterval(() => {
+    left == 0 ? flag = true : left == 100 ? flag = false : ''
+    flag ? e.style.left = ` ${left++}px` : e.style.left = ` ${left--}px`
+}, 1000 / 60)
+```
+
+**requestAnimationFrame**
+
+```js
+//兼容性处理
+window.requestAnimFrame = (function(){
+    return window.requestAnimationFrame       ||
+           window.webkitRequestAnimationFrame ||
+           window.mozRequestAnimationFrame    ||
+           function(callback){
+                window.setTimeout(callback, 1000 / 60);
+           };
+})();
+
+var e = document.getElementById("e");
+var flag = true;
+var left = 0;
+
+function render() {
+    left == 0 ? flag = true : left == 100 ? flag = false : '';
+    flag ? e.style.left = ` ${left++}px` :
+        e.style.left = ` ${left--}px`;
+}
+
+(function animloop() {
+    render();
+    requestAnimFrame(animloop);
+})();
+```
+
+**使用css实现一个持续的动画效果**
+
+```css
+animation:mymove 5s infinite;
+
+@keyframes mymove {
+    from {top:0px;}
+    to {top:200px;}
+}
+```
+
+- `animation-name` 规定需要绑定到选择器的 `keyframe`名称。
+- `animation-duration` 规定完成动画所花费的时间，以秒或毫秒计。
+- `animation-timing-function` 规定动画的速度曲线。
+- `animation-delay` 规定在动画开始之前的延迟。
+- `animation-iteration-count` 规定动画应该播放的次数。
+- `animation-direction` 规定是否应该轮流反向播放动画
+
+#### 封装一个函数，参数是定时器的时间，.then执行回调函数
+
+```js
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
+```
+
+#### 怎么判断两个对象相等？
+
+```js
+obj={
+    a:1,
+    b:2
+}
+obj2={
+    a:1,
+    b:2
+}
+obj3={
+    a:1,
+    b:'2'
+}
+```
+
+> 可以转换为字符串来判断
+
+```js
+JSON.stringify(obj)==JSON.stringify(obj2);//true
+JSON.stringify(obj)==JSON.stringify(obj3);//false
+```
+
+#### WebSocket
+
+> 由于 `http` 存在一个明显的弊端（消息只能有客户端推送到服务器端，而服务器端不能主动推送到客户端），导致如果服务器如果有连续的变化，这时只能使用轮询，而轮询效率过低，并不适合。于是 `WebSocket`被发明出来
+
+> 相比与 `http` 具有以下有点
+
+- 支持双向通信，实时性更强；
+- 可以发送文本，也可以二进制文件；
+- 协议标识符是 `ws`，加密后是 `wss` ；
+- 较少的控制开销。连接创建后，`ws`客户端、服务端进行数据交换时，协议控制的数据包头部较小。在不包含头部的情况下，服务端到客户端的包头只有`2~10`字节（取决于数据包长度），客户端到服务端的的话，需要加上额外的4字节的掩码。而`HTTP`协议每次通信都需要携带完整的头部；
+- 支持扩展。ws协议定义了扩展，用户可以扩展协议，或者实现自定义的子协议。（比如支持自定义压缩算法等）
+- 无跨域问题。
+
+> 实现比较简单，服务端库如 `socket.io`、`ws`，可以很好的帮助我们入门。而客户端也只需要参照 `api` 实现即可
+
+#### Hybrid
+
+> http://blog.poetries.top/2018/10/20/fe-interview-hybrid/
+
+#### 组件化
+
+> http://blog.poetries.top/2018/10/20/fe-interview-component/
+
+#### MVVM
+
+> http://blog.poetries.top/2018/10/20/fe-interview-mvvm/
+
+#### 我现在有一个`canvas`，上面随机布着一些黑块，请实现方法，计算canvas上有多少个黑块
+
+> https://www.jianshu.com/p/f54d265f7aa4
+
