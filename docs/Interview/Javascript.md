@@ -719,3 +719,232 @@ JSON.stringify(obj)==JSON.stringify(obj3);//false
 
 > https://www.jianshu.com/p/f54d265f7aa4
 
+#### 现在要你完成一个Dialog组件，说说你设计的思路？它应该有什么功能？
+
+- 该组件需要提供`hook`指定渲染位置，默认渲染在body下面。
+- 然后改组件可以指定外层样式，如宽度等
+- 组件外层还需要一层`mask`来遮住底层内容，点击`mask`可以执行传进来的`onCancel`函数关闭`Dialog`。
+- 另外组件是可控的，需要外层传入`visible`表示是否可见。
+- 然后`Dialog`可能需要自定义头head和底部`footer`，默认有头部和底部，底部有一个确认按钮和取消按钮，确认按钮会执行外部传进来的`onOk`事件，然后取消按钮会执行外部传进来的`onCancel`事件。
+- 当组件的`visible`为`true`时候，设置`body`的`overflow`为`hidden`，隐藏`body`的滚动条，反之显示滚动条。
+- 组件高度可能大于页面高度，组件内部需要滚动条。
+- 只有组件的`visible`有变化且为`ture`时候，才重渲染组件内的所有内容
+
+#### `caller`和`callee`的区别
+
+**caller*
+
+> `caller`返回一个函数的引用，这个函数调用了当前的函数。
+
+**使用这个属性要注意**
+
+- 这个属性只有当函数在执行时才有用
+- 如果在`javascript`程序中，函数是由顶层调用的，则返回`null`
+
+> `functionName.caller: functionName`是当前正在执行的函数。
+
+```js
+function a() {
+  console.log(a.caller)
+}
+```
+
+**callee**
+
+> `callee`放回正在执行的函数本身的引用，它是`arguments`的一个属性
+
+> 使用callee时要注意:
+
+- 这个属性只有在函数执行时才有效
+- 它有一个`length`属性，可以用来获得形参的个数，因此可以用来比较形参和实参个数是否一致，即比较`arguments.length`是否等于`arguments.callee.length`
+- 它可以用来递归匿名函数。
+
+```js
+function a() {
+  console.log(arguments.callee)
+}
+```
+
+#### ajax、axios、fetch区别
+
+**jQuery ajax**
+
+```js
+$.ajax({
+   type: 'POST',
+   url: url,
+   data: data,
+   dataType: dataType,
+   success: function () {},
+   error: function () {}
+});
+```
+
+优缺点：
+
+- 本身是针对`MVC`的编程,不符合现在前端`MVVM`的浪潮
+- 基于原生的`XHR`开发，`XHR`本身的架构不清晰，已经有了`fetch`的替代方案
+- `JQuery`整个项目太大，单纯使用`ajax`却要引入整个`JQuery`非常的不合理（采取个性化打包的方案又不能享受CDN服务）
+
+**axios**
+
+```js
+axios({
+    method: 'post',
+    url: '/user/12345',
+    data: {
+        firstName: 'Fred',
+        lastName: 'Flintstone'
+    }
+})
+.then(function (response) {
+    console.log(response);
+})
+.catch(function (error) {
+    console.log(error);
+});
+```
+
+优缺点：
+
+- 从浏览器中创建 `XMLHttpRequest`
+- 从 `node.js` 发出 `http` 请求
+- 支持 `Promise API`
+- 拦截请求和响应
+- 转换请求和响应数据
+- 取消请求
+- 自动转换`JSON`数据
+- 客户端支持防止`CSRF/XSRF`
+
+**fetch**
+
+```js
+try {
+  let response = await fetch(url);
+  let data = response.json();
+  console.log(data);
+} catch(e) {
+  console.log("Oops, error", e);
+
+}
+```
+
+优缺点：
+
+- `fetcht`只对网络请求报错，对`400`，`500`都当做成功的请求，需要封装去处理
+- `fetch`默认不会带`cookie`，需要添加配置项
+- `fetch`不支持`abort`，不支持超时控制，使用`setTimeout`及`Promise.reject`的实现的超时控制并不能阻止请求过程继续在后台运行，造成了量的浪费
+- `fetch`没有办法原生监测请求的进度，而XHR可以
+
+#### 检测浏览器版本版本有哪些方式？
+
+- 根据 `navigator.userAgent` `UA.toLowerCase().indexOf('chrome')`
+- 根据 `window` 对象的成员 `'ActiveXObject' in window`
+
+#### DOM树和渲染树的区别
+
+- `DOM`树与`HTML`标签一一对应，包括`head`和隐藏元素
+- 渲染树不包括`head`和隐藏元素，大段文本的每一个行都是独立节点，每一个节点都有对应的`css`属性
+
+####  script 的位置是否会影响首屏显示时间
+
+- 在解析 `HTML` 生成 `DOM` 过程中，`js` 文件的下载是并行的，不需要 `DOM` 处理到 `script` 节点。因此，`script`的位置不影响首屏显示的开始时间。
+- 浏览器解析 `HTML` 是自上而下的线性过程，`script`作为 `HTML` 的一部分同样遵循这个原则
+- 因此，`script` 会延迟 `DomContentLoad`，只显示其上部分首屏内容，从而影响首屏显示的完成时间
+
+#### DOM发展
+
+- `DOM`：文档对象模型（`Document Object Model`），定义了访问HTML和XML文档的标准，与编程语言及平台无关
+- `DOM0`：提供了查询和操作Web文档的内容API。未形成标准，实现混乱。如：`document.forms['login']`
+- `DOM1`：W3C提出标准化的DOM，简化了对文档中任意部分的访问和操作。如：`JavaScript中的Document`对象
+- `DOM2`：原来DOM基础上扩充了鼠标事件等细分模块，增加了对CSS的支持。如：`getComputedStyle(elem, pseudo)`
+- `DOM3`：增加了XPath模块和加载与保存（`Load and Save`）模块。如：`XPathEvaluator`
+
+#### 介绍DOM0，DOM2，DOM3事件处理方式区别
+
+- DOM0级事件处理方式：
+  - `btn.onclick = func;`
+  - `btn.onclick = null;`
+- DOM2级事件处理方式：
+  - `btn.addEventListener('click', func, false);`
+  - `btn.removeEventListener('click', func, false);`
+  - `btn.attachEvent("onclick", func);`
+  - `btn.detachEvent("onclick", func);`
+- DOM3级事件处理方式：
+  - `eventUtil.addListener(input, "textInput", func);`
+  - `eventUtil` 是自定义对象，`textInput` 是DOM3级事件
+
+#### **W3C事件的 target 与 currentTarget 的区别？**
+
+- `target` 只会出现在事件流的目标阶段
+- `currentTarget` 可能出现在事件流的任何阶段
+- 当事件流处在目标阶段时，二者的指向相同
+- 当事件流处于捕获或冒泡阶段时：`currentTarget` 指向当前事件活动的对象(一般为父级)
+
+#### **如何派发事件(dispatchEvent)？（如何进行事件广播？）**
+
+- W3C: 使用 `dispatchEvent` 方法
+- IE: 使用 `fireEvent` 方法
+
+```js
+var fireEvent = function(element, event){
+    if (document.createEventObject){
+        var mockEvent = document.createEventObject();
+        return element.fireEvent('on' + event, mockEvent)
+    }else{
+        var mockEvent = document.createEvent('HTMLEvents');
+        mockEvent.initEvent(event, true, true);
+        return !element.dispatchEvent(mockEvent);
+    }
+}
+```
+
+#### 解释一下这段代码的意思
+
+```js
+  [].forEach.call($$("*"), function(el){
+      el.style.outline = "1px solid #" + (~~(Math.random()*(1<<24))).toString(16);
+  })
+```
+
+- 解释：获取页面所有的元素，遍历这些元素，为它们添加1像素随机颜色的轮廓(outline)
+- 1. `$$(sel)` // $$函数被许多现代浏览器命令行支持，等价于 document.querySelectorAll(sel)
+- 1. `[].forEach.call(NodeLists)` // 使用 call 函数将数组遍历函数 forEach 应到节点元素列表
+- 1. `el.style.outline = "1px solid #333"` // 样式 outline 位于盒模型之外，不影响元素布局位置
+- 1. `(1<<24)` // parseInt("ffffff", 16) == 16777215 == 2^24 - 1 // 1<<24 == 2^24 == 16777216
+- 1. `Math.random()*(1<<24)` // 表示一个位于 0 到 16777216 之间的随机浮点数
+- 1. `~~Math.random()*(1<<24)` // `~~` 作用相当于 parseInt 取整
+- 1. `(~~(Math.random()*(1<<24))).toString(16)` // 转换为一个十六进制-
+
+#### 如何删除一个cookie
+
+- 将时间设为当前时间往前一点
+
+```js
+var date = new Date();
+
+date.setDate(date.getDate() - 1);//真正的删除
+```
+
+> `setDate()`方法用于设置一个月的某一天
+
+- `expires`的设置
+
+```js
+document.cookie = 'user='+ encodeURIComponent('name')  + ';expires = ' + new Date(0)
+```
+
+#### WEB应用从服务器主动推送Data到客户端有那些方式
+
+- `AJAX` 轮询
+- `html5` 服务器推送事件 `(new EventSource(SERVER_URL)).addEventListener("message", func);`
+- html5 Websocket
+
+- `(new WebSocket(SERVER_URL)).addEventListener("message", func);`
+
+#### 有四个操作会忽略enumerable为false的属性
+
+- `for...in`循环：只遍历对象自身的和继承的可枚举的属性。
+- `Object.keys()`：返回对象自身的所有可枚举的属性的键名。
+- `JSON.stringify()`：只串行化对象自身的可枚举的属性。
+- `Object.assign()`： 忽略`enumerable`为`false`的属性，只拷贝对象自身的可枚举的属性。
