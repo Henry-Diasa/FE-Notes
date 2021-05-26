@@ -323,3 +323,32 @@
 
 #### This
 
+- 函数直接调用（foo()），this指向window(严格模式是undefined)
+
+- 对象属性调用（obj.foo()）, this指向obj
+
+- new的方式调用，this永远指向实例对象
+
+- 箭头函数的this只取决包裹箭头函数的第一个普通函数的 this,箭头函数使用bind是无效的
+
+- 最后种情况也就是 bind 这些改变上下文的 API 了，对于这些函数来说，this 取决于第一个参数，如果第一个参数为空，那么就是window
+
+- bind绑定多次，this只取决于**第一次bind**的值
+
+  ```js
+  let a = {}
+  let fn = function () { console.log(this) }
+  fn.bind().bind(a)() // => ?
+  
+  // fn.bind().bind(a) 等于
+  let fn2 = function fn1() {
+    return function() {
+      return fn.apply()
+    }.apply(a)
+  }
+  fn2()
+  ```
+
+- this优先级： new > bind等 > obj.foo > foo
+
+#### apply/call/bind 原理
