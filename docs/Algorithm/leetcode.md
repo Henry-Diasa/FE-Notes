@@ -10,3 +10,7 @@
 
 [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
 
+#### 双指针
+
+[125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
+
