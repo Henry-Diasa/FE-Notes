@@ -352,3 +352,697 @@
 - this优先级： new > bind等 > obj.foo > foo
 
 #### apply/call/bind 原理
+
+> JS基础系列有相关内容
+
+#### 执行上下文
+
+- 对于非匿名的立即执行函数需要注意以下一点
+
+```js
+var foo = 1
+(function foo() {
+    foo = 10
+    console.log(foo)
+}()) // -> ƒ foo() { foo = 10 ; console.log(foo) }
+```
+
+> 因为当 `JS` 解释器在遇到非匿名的立即执行函数时，会创建一个辅助的特定对象，然后将函数名称作为这个对象的属性，因此函数内部才可以访问到 `foo`，但是这个值又是只读的，所以对它的赋值并不生效，所以打印的结果还是这个函数，并且外部的值也没有发生更改。
+
+#### 作用域
+
+#### 闭包
+
+- 不一定**返回函数**才产生闭包
+
+  ```js
+  // 我们只需要让父级作用域的引用存在即可
+  var fun3;
+  function fun1() {
+    var a = 2
+    fun3 = function() {
+      console.log(a);
+    }
+  }
+  fun1();
+  fun3();
+  ```
+
+  ```js
+  for (var i = 0; i < 6; i++) {
+    setTimeout(() => {
+      console.log(i)
+    })
+  }
+  ```
+
+  上面输出结果和如何正确的按照顺序输出
+
+  - 闭包
+
+    ```js
+    for(var i = 1;i <= 5;i++){
+      (function(j){
+        setTimeout(function timer(){
+          console.log(j)
+        }, 0)
+      })(i)
+    }
+    ```
+
+  - let
+
+    ```js
+    for(let i = 1; i <= 5; i++){
+      setTimeout(function() {
+        console.log(i);
+      },0)
+    }
+    ```
+
+    
+
+  - setTimeout第三个参数
+
+    ```js
+    for(var i=1;i<=5;i++){
+      setTimeout(function(j) {
+        console.log(j)
+      }, 0, i)
+    }
+    ```
+
+#### New的原理
+
+```js
+function create(fn, ...args) {
+  if(typeof fn !== 'function') {
+    throw 'fn must be a function';
+  }
+	// 1、用new Object() 的方式新建了一个对象obj
+  // var obj = new Object()
+	// 2、给该对象的__proto__赋值为fn.prototype，即设置原型链
+  // obj.__proto__ = fn.prototype
+
+  // 1、2步骤合并
+  // 创建一个空对象，且这个空对象继承构造函数的 prototype 属性
+  // 即实现 obj.__proto__ === constructor.prototype
+  var obj = Object.create(fn.prototype);
+
+	// 3、执行fn，并将obj作为内部this。使用 apply，改变构造函数 this 的指向到新建的对象，这样 obj 就可以访问到构造函数中的属性
+  var res = fn.apply(obj, args);
+	// 4、如果fn有返回值，则将其作为new操作返回内容，否则返回obj
+	return res instanceof Object ? res : obj;
+};
+```
+
+#### 原型和原型链
+
+#### 继承
+
+#### 面向对象
+
+**编程思想**
+
+- 基本思想是使用对象，类，继承，封装等基本概念来进行程序设计
+- 优点
+  - 易维护
+    - 采用面向对象思想设计的结构，可读性高，由于继承的存在，即使改变需求，那么维护也只是在局部模块，所以维护起来是非常方便和较低成本的
+  - 易扩展
+  - 开发工作的重用性、继承性高，降低重复工作量。
+  - 缩短了开发周期
+
+> 一般面向对象包含：继承，封装，多态，抽象
+
+**1. 对象形式的继承**
+
+浅拷贝
+
+```js
+var Person = {
+    name: 'allin',
+    age: 18,
+    address: {
+        home: 'home',
+        office: 'office',
+    }
+    sclools: ['x','z'],
+};
+
+var programer = {
+    language: 'js',
+};
+
+function extend(p, c){
+    var c = c || {};
+    for( var prop in p){
+        c[prop] = p[prop];
+    }
+}
+extend(Person, programer);
+programer.name;  // allin
+programer.address.home;  // home
+programer.address.home = 'house';  //house
+Person.address.home;  // house
+```
+
+> 从上面的结果看出，浅拷贝的缺陷在于修改了子对象中引用类型的值，会影响到父对象中的值，因为在浅拷贝中对引用类型的拷贝只是拷贝了地址，指向了内存中同一个副本
+
+深拷贝
+
+```js
+function extendDeeply(p, c){
+    var c = c || {};
+    for (var prop in p){
+        if(typeof p[prop] === "object"){
+            c[prop] = (p[prop].constructor === Array)?[]:{};
+            extendDeeply(p[prop], c[prop]);
+        }else{
+            c[prop] = p[prop];
+        }
+    }
+}
+```
+
+> 利用递归进行深拷贝，这样子对象的修改就不会影响到父对象
+
+```js
+extendDeeply(Person, programer);
+programer.address.home = 'allin';
+Person.address.home; // home
+```
+
+**利用call和apply继承**
+
+```js
+function Parent(){
+    this.name = "abc";
+    this.address = {home: "home"};
+}
+function Child(){
+    Parent.call(this);
+    this.language = "js"; 
+}
+```
+
+**ES5中的Object.create()**
+
+```js
+var p = { name : 'allin'};
+var obj = Object.create(o);
+obj.name; // allin
+```
+
+> `Object.create()`作为new操作符的替代方案是ES5之后才出来的。我们也可以自己模拟该方法：
+
+```js
+//模拟Object.create()方法
+function myCreate(o){
+    function F(){};
+    F.prototype = o;
+    o = new F();
+    return o;
+}
+var p = { name : 'allin'};
+var obj = myCreate(o);
+obj.name; // allin
+```
+
+目前，各大浏览器的最新版本（包括IE9）都部署了这个方法。如果遇到老式浏览器，可以用下面的代码自行部署
+
+```js
+　if (!Object.create) {
+　　　　Object.create = function (o) {
+　　　　　　 function F() {}
+　　　　　　F.prototype = o;
+　　　　　　return new F();
+　　　　};
+　　}
+```
+
+**2. 类的继承**
+
+> ```
+> Object.create()
+> ```
+
+```js
+function Person(name, age){}
+Person.prototype.headCount = 1;
+Person.prototype.eat = function(){
+    console.log('eating...');
+}
+function Programmer(name, age, title){}
+
+Programmer.prototype = Object.create(Person.prototype); //建立继承关系
+Programmer.prototype.constructor = Programmer;  // 修改constructor的指向
+```
+
+**调用父类方法**
+
+```js
+function Person(name, age){
+    this.name = name;
+    this.age = age;
+}
+Person.prototype.headCount = 1;
+Person.prototype.eat = function(){
+    console.log('eating...');
+}
+
+function Programmer(name, age, title){
+    Person.apply(this, arguments); // 调用父类的构造器
+}
+
+
+Programmer.prototype = Object.create(Person.prototype);
+Programmer.prototype.constructor = Programmer;
+
+Programmer.prototype.language = "js";
+Programmer.prototype.work = function(){
+    console.log('i am working code in '+ this.language);
+    Person.prototype.eat.apply(this, arguments); // 调用父类上的方法
+}
+```
+
+**3. 封装**
+
+- 命名空间
+  - js是没有命名空间的，因此可以用对象模拟
+
+```js
+var app = {};  // 命名空间app
+//模块1
+app.module1 = {
+    name: 'allin',
+    f: function(){
+        console.log('hi robot');
+    }
+};
+app.module1.name; // "allin"
+app.module1.f();  // hi robot
+```
+
+> 对象的属性外界是可读可写 如何来达到封装的额目的？答：可通过`闭包+局部变量`来完成
+
+- 在构造函数内部声明局部变量 和普通方法
+- 因为作用域的关系 只有构造函数内的方法
+- 才能访问局部变量 而方法对于外界是开放的
+- 因此可以通过方法来访问 原本外界访问不到的局部变量 达到函数封装的目的
+
+```js
+function Girl(name,age){
+	var love = '小明';//love 是局部变量 准确说不属于对象 属于这个函数的额激活对象 函数调用时必将产生一个激活对象 love在激活对象身上   激活对象有作用域的关系 有办法访问  加一个函数提供外界访问
+	this.name = name;
+	this.age = age;
+	this.say = function () {
+		return love;
+	};
+
+	this.movelove = function (){
+		love = '小轩'; //35
+	}
+
+} 
+
+var g = new Girl('yinghong',22);
+
+console.log(g);
+console.log(g.say());//小明
+console.log(g.movelove());//undefined  因为35行没有返回
+console.log(g.say());//小轩
+
+
+
+function fn(){
+	function t(){
+		//var age = 22;//声明age变量 在t的激活对象上
+		age = 22;//赋值操作 t的激活对象上找age属性 ，找不到 找fn的激活对象....再找到 最终找到window.age = 22;
+				//不加var就是操作window全局属性
+	
+	}
+	t();
+}
+console.log(fn());//undefined
+```
+
+**4. 静态成员**
+
+> 面向对象中的静态方法-静态属性：没有new对象 也能引用静态方法属性
+
+```js
+function Person(name){
+    var age = 100;
+    this.name = name;
+}
+//静态成员
+Person.walk = function(){
+    console.log('static');
+};
+Person.walk();  // static
+```
+
+**5. 私有与公有**
+
+```js
+function Person(id){
+    // 私有属性与方法
+    var name = 'allin';
+    var work = function(){
+        console.log(this.id);
+    };
+    //公有属性与方法
+    this.id = id;
+    this.say = function(){
+        console.log('say hello');
+        work.call(this);
+    };
+};
+var p1 = new Person(123);
+p1.name; // undefined
+p1.id;  // 123
+p1.say();  // say hello 123
+```
+
+**6. 模块化**
+
+```js
+var moduleA;
+moduleA = function() {
+    var prop = 1;
+
+    function func() {}
+
+    return {
+        func: func,
+        prop: prop
+    };
+}(); // 立即执行匿名函数
+```
+
+**7. 多态**
+
+> 多态:同一个父类继承出来的子类各有各的形态
+
+```js
+function Cat(){
+	this.eat = '肉';
+}
+
+function Tiger(){
+	this.color = '黑黄相间';
+}
+
+function Cheetah(){
+	this.color = '报文';
+}
+
+function Lion(){
+	this.color = '土黄色';
+}
+
+Tiger.prototype =  Cheetah.prototype = Lion.prototype = new Cat();//共享一个祖先 Cat
+
+var T = new Tiger();
+var C = new Cheetah();
+var L = new Lion();
+
+console.log(T.color);
+console.log(C.color);
+console.log(L.color);
+
+
+console.log(T.eat);
+console.log(C.eat);
+console.log(L.eat);
+```
+
+**8. 抽象类**
+
+> 在构造器中 `throw new Error('')`; 抛异常。这样防止这个类被直接调用
+
+```js
+function DetectorBase() {
+    throw new Error('Abstract class can not be invoked directly!');
+}
+
+DetectorBase.prototype.detect = function() {
+    console.log('Detection starting...');
+};
+DetectorBase.prototype.stop = function() {
+    console.log('Detection stopped.');
+};
+DetectorBase.prototype.init = function() {
+    throw new Error('Error');
+};
+
+// var d = new DetectorBase();
+// Uncaught Error: Abstract class can not be invoked directly!
+
+function LinkDetector() {}
+LinkDetector.prototype = Object.create(DetectorBase.prototype);
+LinkDetector.prototype.constructor = LinkDetector;
+
+var l = new LinkDetector();
+console.log(l); //LinkDetector {}__proto__: LinkDetector
+l.detect(); //Detection starting...
+l.init(); //Uncaught Error: Error
+```
+
+#### 事件机制
+
+> 涉及面试题：事件的触发过程是怎么样的？知道什么是事件代理嘛？
+
+**1. 简介**
+
+> 事件流是一个事件沿着特定数据结构传播的过程。冒泡和捕获是事件流在`DOM`中两种不同的传播方法
+
+**事件流有三个阶段**
+
+- 事件捕获阶段
+- 处于目标阶段
+- 事件冒泡阶段
+
+**事件捕获**
+
+> 事件捕获（`event capturing`）：通俗的理解就是，当鼠标点击或者触发`dom`事件时，浏览器会从根节点开始由外到内进行事件传播，即点击了子元素，如果父元素通过事件捕获方式注册了对应的事件的话，会先触发父元素绑定的事件
+
+**事件冒泡**
+
+> 事件冒泡（dubbed bubbling）：与事件捕获恰恰相反，事件冒泡顺序是由内到外进行事件传播，直到根节点
+
+无论是事件捕获还是事件冒泡，它们都有一个共同的行为，就是事件传播
+
+![img](https://poetries1.gitee.io/img-repo/2019/10/319.png)
+
+**2. 捕获和冒泡**
+
+```html
+<div id="div1">
+  <div id="div2"></div>
+</div>
+
+<script>
+    let div1 = document.getElementById('div1');
+    let div2 = document.getElementById('div2');
+    
+    div1.onClick = function(){
+        alert('1')
+    }
+    
+    div2.onClick = function(){
+        alert('2');
+    }
+
+</script>
+```
+
+> 当点击 `div2`时，会弹出两个弹出框。在 `ie8/9/10`、`chrome`浏览器，会先弹出”2”再弹出“1”，这就是事件冒泡：事件从最底层的节点向上冒泡传播。事件捕获则跟事件冒泡相反
+
+> W3C的标准是先捕获再冒泡， `addEventListener`的第三个参数决定把事件注册在捕获（`true`）还是冒泡(`false`)
+
+**3. 事件对象**
+
+![img](https://poetries1.gitee.io/img-repo/2019/10/320.png)
+
+**4. 事件流阻止**
+
+> 在一些情况下需要阻止事件流的传播，阻止默认动作的发生
+
+- `event.preventDefault()`：取消事件对象的默认动作以及继续传播。
+- `event.stopPropagation()/ event.cancelBubble = true`：阻止事件冒泡。
+
+**事件的阻止在不同浏览器有不同处理**
+
+- 在`IE`下使用 `event.returnValue= false`，
+- 在非`IE`下则使用 `event.preventDefault()`进行阻止
+
+**preventDefault与stopPropagation的区别**
+
+- `preventDefault`告诉浏览器不用执行与事件相关联的默认动作（如表单提交）
+- `stopPropagation`是停止事件继续冒泡，但是对IE9以下的浏览器无效
+
+**5. 事件注册**
+
+- 通常我们使用 `addEventListener` 注册事件，该函数的第三个参数可以是布尔值，也可以是对象。对于布尔值 `useCapture` 参数来说，该参数默认值为 `false`。`useCapture` 决定了注册的事件是捕获事件还是冒泡事件
+- 一般来说，我们只希望事件只触发在目标上，这时候可以使用 `stopPropagation` 来阻止事件的进一步传播。通常我们认为 `stopPropagation` 是用来阻止事件冒泡的，其实该函数也可以阻止捕获事件。`stopImmediatePropagation` 同样也能实现阻止事件，但是还能阻止该事件目标执行别的注册事件
+
+```js
+node.addEventListener('click',(event) =>{
+	event.stopImmediatePropagation()
+	console.log('冒泡')
+},false);
+// 点击 node 只会执行上面的函数，该函数不会执行
+node.addEventListener('click',(event) => {
+	console.log('捕获 ')
+},true)
+```
+
+**6. 事件委托**
+
+- 在`js`中性能优化的其中一个主要思想是减少`dom`操作。
+- 节省内存
+- 不需要给子节点注销事件
+
+> 假设有`100`个`li`，每个`li`有相同的点击事件。如果为每`个Li`都添加事件，则会造成`dom`访问次数过多，引起浏览器重绘与重排的次数过多，性能则会降低。 使用事件委托则可以解决这样的问题
+
+**原理**
+
+> 实现事件委托是利用了事件的冒泡原理实现的。当我们为最外层的节点添加点击事件，那么里面的`ul`、`li`、`a`的点击事件都会冒泡到最外层节点上，委托它代为执行事件
+
+```html
+<ul id="ul">
+    <li>1</li>
+    <li>2</li>
+    <li>3</li>
+</ul>
+window.onload = function(){
+    var ulEle = document.getElementById('ul');
+    ul.onclick = function(ev){
+        //兼容IE
+        ev = ev || window.event;
+        var target = ev.target || ev.srcElement;
+        
+        if(target.nodeName.toLowerCase() == 'li'){
+            alert( target.innerHTML);
+        }
+        
+    }
+}
+```
+
+#### 模块化
+
+> js 中现在比较成熟的有四种模块加载方案：
+
+- 第一种是 CommonJS 方案，它通过 require 来引入模块，通过 module.exports 定义模块的输出接口。这种模块加载方案是服务器端的解决方案，它是以同步的方式来引入模块的，因为在服务端文件都存储在本地磁盘，所以读取非常快，所以以同步的方式加载没有问题。但如果是在浏览器端，由于模块的加载是使用网络请求，因此使用异步加载的方式更加合适。
+- 第二种是 AMD 方案，这种方案采用异步加载的方式来加载模块，模块的加载不影响后面语句的执行，所有依赖这个模块的语句都定义在一个回调函数里，等到加载完成后再执行回调函数。require.js 实现了 AMD 规范
+- 第三种是 CMD 方案，这种方案和 AMD 方案都是为了解决异步模块加载的问题，sea.js 实现了 CMD 规范。它和require.js的区别在于模块定义时对依赖的处理不同和对依赖模块的执行时机的处理不同。
+- 第四种方案是 ES6 提出的方案，使用 import 和 export 的形式来导入导出模块
+
+> 在有 `Babel` 的情况下，我们可以直接使用 `ES6`的模块化
+
+```js
+// file a.js
+export function a() {}
+export function b() {}
+// file b.js
+export default function() {}
+
+import {a, b} from './a.js'
+import XXX from './b.js'
+```
+
+**CommonJS**
+
+> `CommonJs` 是 `Node` 独有的规范，浏览器中使用就需要用到 `Browserify`解析了。
+
+```js
+// a.js
+module.exports = {
+    a: 1
+}
+// or
+exports.a = 1
+
+// b.js
+var module = require('./a.js')
+module.a // -> log 1
+```
+
+> 在上述代码中，`module.exports` 和 `exports` 很容易混淆，让我们来看看大致内部实现
+
+```js
+var module = require('./a.js')
+module.a
+// 这里其实就是包装了一层立即执行函数，这样就不会污染全局变量了，
+// 重要的是 module 这里，module 是 Node 独有的一个变量
+module.exports = {
+    a: 1
+}
+// 基本实现
+var module = {
+  exports: {} // exports 就是个空对象
+}
+// 这个是为什么 exports 和 module.exports 用法相似的原因
+var exports = module.exports
+var load = function (module) {
+    // 导出的东西
+    var a = 1
+    module.exports = a
+    return module.exports
+};
+```
+
+> 再来说说 `module.exports` 和`exports`，用法其实是相似的，但是不能对 `exports` 直接赋值，不会有任何效果。
+
+> 对于 `CommonJS` 和 `ES6` 中的模块化的两者区别是：
+
+- 前者支持动态导入，也就是 `require(${path}/xx.js)`，后者目前不支持，但是已有提案,前者是同步导入，因为用于服务端，文件都在本地，同步导入即使卡住主线程影响也不大。
+- 而后者是异步导入，因为用于浏览器，需要下载文件，如果也采用同步导入会对渲染有很大影响
+- 前者在导出时都是值拷贝，就算导出的值变了，导入的值也不会改变，所以如果想更新值，必须重新导入一次。
+- 但是后者采用实时绑定的方式，导入导出的值都指向同一个内存地址，所以导入值会跟随导出值变化
+- 后者会编译成 `require/exports` 来执行的
+
+**AMD**
+
+> `AMD` 是由 `RequireJS` 提出的
+
+**AMD 和 CMD 规范的区别？**
+
+- 第一个方面是在模块定义时对依赖的处理不同。AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块。而 CMD 推崇就近依赖，只有在用到某个模块的时候再去 require。
+- 第二个方面是对依赖模块的执行时机处理不同。首先 AMD 和 CMD 对于模块的加载方式都是异步加载，不过它们的区别在于模块的执行时机，AMD 在依赖模块加载完成后就直接执行依赖模块，依赖模块的执行顺序和我们书写的顺序不一定一致。而 CMD在依赖模块加载完成后并不执行，只是下载而已，等到所有的依赖模块都加载好后，进入回调函数逻辑，遇到 require 语句的时候才执行对应的模块，这样模块的执行顺序就和我们书写的顺序保持一致了。
+
+```js
+// CMD
+define(function(require, exports, module) {
+  var a = require("./a");
+  a.doSomething();
+  // 此处略去 100 行
+  var b = require("./b"); // 依赖可以就近书写
+  b.doSomething();
+  // ...
+});
+
+// AMD 默认推荐
+define(["./a", "./b"], function(a, b) {
+  // 依赖必须一开始就写好
+  a.doSomething();
+  // 此处略去 100 行
+  b.doSomething();
+  // ...
+})
+```
+
+- **AMD**：`requirejs` 在推广过程中对模块定义的规范化产出，提前执行，推崇依赖前置
+- **CMD**：`seajs` 在推广过程中对模块定义的规范化产出，延迟执行，推崇依赖就近
+- **CommonJs**：模块输出的是一个值的 `copy`，运行时加载，加载的是一个对象（`module.exports` 属性），该对象只有在脚本运行完才会生成
+- **ES6 Module**：模块输出的是一个值的引用，编译时输出接口，`ES6`模块不是对象，它对外接口只是一种静态定义，在代码静态解析阶段就会生成。
+
+**谈谈对模块化开发的理解**
+
+- 我对模块的理解是，一个模块是实现一个特定功能的一组方法。在最开始的时候，js 只实现一些简单的功能，所以并没有模块的概念，但随着程序越来越复杂，代码的模块化开发变得越来越重要。
+- 由于函数具有独立作用域的特点，最原始的写法是使用函数来作为模块，几个函数作为一个模块，但是这种方式容易造成全局变量的污染，并且模块间没有联系。
+- 后面提出了对象写法，通过将函数作为一个对象的方法来实现，这样解决了直接使用函数作为模块的一些缺点，但是这种办法会暴露所有的所有的模块成员，外部代码可以修改内部属性的值。
+- 现在最常用的是立即执行函数的写法，通过利用闭包来实现模块私有作用域的建立，同时不会对全局作用域造成污染。
+
