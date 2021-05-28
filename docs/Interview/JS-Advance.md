@@ -1138,7 +1138,7 @@ for (let key of obj) {
 
 ![img](http://img-repo.poetries.top/images/20210407141323.png)
 
-### Promise
+#### Promise
 
 > 这里你谈 `promise`的时候，除了将他解决的痛点以及常用的 `API` 之外，最好进行拓展把 `eventloop` 带进来好好讲一下，`microtask`(微任务)、`macrotask`(任务) 的执行顺序，如果看过 `promise` 源码，最好可以谈一谈 原生 `Promise` 是如何实现的。`Promise` 的关键点在于`callback` 的两个参数，一个是 `resovle`，一个是 `reject`。还有就是 `Promise` 的链式调用（`Promise.then()`，每一个 `then` 都是一个责任人）
 
@@ -2259,4 +2259,1093 @@ console.log('cloneObj', cloneObj)
 
 ![img](http://img-repo.poetries.top/images/20210414142525.png)
 
-### [#](http://interview.poetries.top/docs/simply.html#_22-节流与防抖)
+
+
+#### 节流与防抖
+
+- 函数防抖 是指在事件被触发 n 秒后再执行回调，如果在这 n 秒内事件又被触发，则重新计时。这可以使用在一些点击请求的事件上，避免因为用户的多次点击向后端发送多次请求。
+- 函数节流 是指规定一个单位时间，在这个单位时间内，只能有一次触发事件的回调函数执行，如果在同一个单位时间内某事件被触发多次，只有一次能生效。节流可以使用在 scroll 函数的事件监听上，通过事件节流来降低事件调用的频率。
+
+```js
+// 函数防抖的实现
+function debounce(fn, wait) {
+  var timer = null;
+
+  return function() {
+    var context = this,
+      args = arguments;
+
+    // 如果此时存在定时器的话，则取消之前的定时器重新记时
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    // 设置定时器，使事件间隔指定事件后执行
+    timer = setTimeout(() => {
+      fn.apply(context, args);
+    }, wait);
+  };
+}
+
+// 函数节流的实现;
+function throttle(fn, delay) {
+  var preTime = Date.now();
+
+  return function() {
+    var context = this,
+      args = arguments,
+      nowTime = Date.now();
+
+    // 如果两次时间间隔超过了指定时间，则执行函数。
+    if (nowTime - preTime >= delay) {
+      preTime = Date.now();
+      return fn.apply(context, args);
+    }
+  };
+}
+```
+
+#### Proxy代理
+
+> proxy在目标对象的外层搭建了一层拦截，外界对目标对象的某些操作，必须通过这层拦截
+
+```js
+var proxy = new Proxy(target, handler);
+```
+
+> `new Proxy()`表示生成一个Proxy实例，`target`参数表示所要拦截的目标对象，`handler`参数也是一个对象，用来定制拦截行为
+
+```js
+var target = {
+   name: 'poetries'
+ };
+ var logHandler = {
+   get: function(target, key) {
+     console.log(`${key} 被读取`);
+     return target[key];
+   },
+   set: function(target, key, value) {
+     console.log(`${key} 被设置为 ${value}`);
+     target[key] = value;
+   }
+ }
+ var targetWithLog = new Proxy(target, logHandler);
+ 
+ targetWithLog.name; // 控制台输出：name 被读取
+ targetWithLog.name = 'others'; // 控制台输出：name 被设置为 others
+ 
+ console.log(target.name); // 控制台输出: others
+```
+
+- `targetWithLog` 读取属性的值时，实际上执行的是 `logHandler.get` ：在控制台输出信息，并且读取被代理对象 `target` 的属性。
+- 在 `targetWithLog` 设置属性值时，实际上执行的是 `logHandler.set` ：在控制台输出信息，并且设置被代理对象 `target` 的属性的值
+
+```js
+// 由于拦截函数总是返回35，所以访问任何属性都得到35
+var proxy = new Proxy({}, {
+  get: function(target, property) {
+    return 35;
+  }
+});
+
+proxy.time // 35
+proxy.name // 35
+proxy.title // 35
+```
+
+**Proxy 实例也可以作为其他对象的原型对象**
+
+```js
+var proxy = new Proxy({}, {
+  get: function(target, property) {
+    return 35;
+  }
+});
+
+let obj = Object.create(proxy);
+obj.time // 35
+```
+
+> `proxy`对象是`obj`对象的原型，`obj`对象本身并没有`time`属性，所以根据原型链，会在`proxy`对象上读取该属性，导致被拦截
+
+**Proxy的作用**
+
+> 对于代理模式 `Proxy` 的作用主要体现在三个方面
+
+- 拦截和监视外部对对象的访问
+- 降低函数或类的复杂度
+- 在复杂操作前对操作进行校验或对所需资源进行管理
+
+**Proxy所能代理的范围--handler**
+
+> 实际上 handler 本身就是ES6所新设计的一个对象.它的作用就是用来 自定义代理对象的各种可代理操作 。它本身一共有13中方法,每种方法都可以代理一种操作.其13种方法如下
+
+```js
+// 在读取代理对象的原型时触发该操作，比如在执行 Object.getPrototypeOf(proxy) 时。
+handler.getPrototypeOf()
+
+// 在设置代理对象的原型时触发该操作，比如在执行 Object.setPrototypeOf(proxy, null) 时。
+handler.setPrototypeOf()
+
+ 
+// 在判断一个代理对象是否是可扩展时触发该操作，比如在执行 Object.isExtensible(proxy) 时。
+handler.isExtensible()
+
+ 
+// 在让一个代理对象不可扩展时触发该操作，比如在执行 Object.preventExtensions(proxy) 时。
+handler.preventExtensions()
+
+// 在获取代理对象某个属性的属性描述时触发该操作，比如在执行 Object.getOwnPropertyDescriptor(proxy, "foo") 时。
+handler.getOwnPropertyDescriptor()
+
+ 
+// 在定义代理对象某个属性时的属性描述时触发该操作，比如在执行 Object.defineProperty(proxy, "foo", {}) 时。
+andler.defineProperty()
+
+ 
+// 在判断代理对象是否拥有某个属性时触发该操作，比如在执行 "foo" in proxy 时。
+handler.has()
+
+// 在读取代理对象的某个属性时触发该操作，比如在执行 proxy.foo 时。
+handler.get()
+
+ 
+// 在给代理对象的某个属性赋值时触发该操作，比如在执行 proxy.foo = 1 时。
+handler.set()
+
+// 在删除代理对象的某个属性时触发该操作，比如在执行 delete proxy.foo 时。
+handler.deleteProperty()
+
+// 在获取代理对象的所有属性键时触发该操作，比如在执行 Object.getOwnPropertyNames(proxy) 时。
+handler.ownKeys()
+
+// 在调用一个目标对象为函数的代理对象时触发该操作，比如在执行 proxy() 时。
+handler.apply()
+
+ 
+// 在给一个目标对象为构造函数的代理对象构造实例时触发该操作，比如在执行new proxy() 时。
+handler.construct()
+```
+
+**为何Proxy不能被Polyfill**
+
+- 如class可以用`function`模拟；`promise`可以用`callback`模拟
+- 但是proxy不能用`Object.defineProperty`模拟
+
+> 目前谷歌的polyfill只能实现部分的功能，如get、set https://github.com/GoogleChrome/proxy-polyfill
+
+```js
+// commonJS require
+const proxyPolyfill = require('proxy-polyfill/src/proxy')();
+
+// Your environment may also support transparent rewriting of commonJS to ES6:
+import ProxyPolyfillBuilder from 'proxy-polyfill/src/proxy';
+const proxyPolyfill = ProxyPolyfillBuilder();
+
+// Then use...
+const myProxy = new proxyPolyfill(...);
+```
+
+#### Ajax
+
+> 它是一种异步通信的方法，通过直接由 js 脚本向服务器发起 http 通信，然后根据服务器返回的数据，更新网页的相应部分，而不用刷新整个页面的一种方法。
+
+![img](https://poetries1.gitee.io/img-repo/2020/09/9.png)
+
+**面试手写（原生）：**
+
+```js
+//1：创建Ajax对象
+var xhr = window.XMLHttpRequest?new XMLHttpRequest():new ActiveXObject('Microsoft.XMLHTTP');// 兼容IE6及以下版本
+//2：配置 Ajax请求地址
+xhr.open('get','index.xml',true);
+//3：发送请求
+xhr.send(null); // 严谨写法
+//4:监听请求，接受响应
+xhr.onreadysatechange=function(){
+     if(xhr.readySate==4&&xhr.status==200 || xhr.status==304 )
+          console.log(xhr.responsetXML)
+}
+```
+
+**jQuery写法**
+
+```js
+$.ajax({
+  type:'post',
+  url:'',
+  async:ture,//async 异步  sync  同步
+  data:data,//针对post请求
+  dataType:'jsonp',
+  success:function (msg) {
+
+  },
+  error:function (error) {
+
+  }
+})
+```
+
+**promise 封装实现：**
+
+```js
+// promise 封装实现：
+
+function getJSON(url) {
+  // 创建一个 promise 对象
+  let promise = new Promise(function(resolve, reject) {
+    let xhr = new XMLHttpRequest();
+
+    // 新建一个 http 请求
+    xhr.open("GET", url, true);
+
+    // 设置状态的监听函数
+    xhr.onreadystatechange = function() {
+      if (this.readyState !== 4) return;
+
+      // 当请求成功或失败时，改变 promise 的状态
+      if (this.status === 200) {
+        resolve(this.response);
+      } else {
+        reject(new Error(this.statusText));
+      }
+    };
+
+    // 设置错误监听函数
+    xhr.onerror = function() {
+      reject(new Error(this.statusText));
+    };
+
+    // 设置响应的数据类型
+    xhr.responseType = "json";
+
+    // 设置请求头信息
+    xhr.setRequestHeader("Accept", "application/json");
+
+    // 发送 http 请求
+    xhr.send(null);
+  });
+
+  return promise;
+}
+```
+
+#### 深入数组
+
+**一、梳理数组 API**
+
+**1. `Array.of`**
+
+> `Array.of` 用于将参数依次转化为数组中的一项，然后返回这个新数组，而不管这个参数是数字还是其他。它基本上与 Array 构造器功能一致，唯一的区别就在单个数字参数的处理上
+
+```js
+Array.of(8.0); // [8]
+Array(8.0); // [empty × 8]
+Array.of(8.0, 5); // [8, 5]
+Array(8.0, 5); // [8, 5]
+Array.of('8'); // ["8"]
+Array('8'); // ["8"]
+```
+
+**2. `Array.from`**
+
+从语法上看，Array.from 拥有 3 个参数：
+
+- 类似数组的对象，必选；
+- 加工函数，新生成的数组会经过该函数的加工再返回；
+- `this` 作用域，表示加工函数执行时 `this` 的值。
+
+这三个参数里面第一个参数是必选的，后两个参数都是可选的。我们通过一段代码来看看它的用法。
+
+```js
+var obj = {0: 'a', 1: 'b', 2:'c', length: 3};
+Array.from(obj, function(value, index){
+  console.log(value, index, this, arguments.length);
+  return value.repeat(3);   //必须指定返回值，否则返回 undefined
+}, obj);
+
+// return 的 value 重复了三遍，最后返回的数组为 ["aaa","bbb","ccc"]
+
+
+// 如果这里不指定 this 的话，加工函数完全可以是一个箭头函数。上述代码可以简写为如下形式。
+Array.from(obj, (value) => value.repeat(3));
+//  控制台返回 (3) ["aaa", "bbb", "ccc"]
+```
+
+> 除了上述 `obj` 对象以外，拥有迭代器的对象还包括 `String、Set、Map` 等，`Array.from` 统统可以处理，请看下面的代码。
+
+```js
+// String
+Array.from('abc');         // ["a", "b", "c"]
+// Set
+Array.from(new Set(['abc', 'def'])); // ["abc", "def"]
+// Map
+Array.from(new Map([[1, 'ab'], [2, 'de']])); 
+// [[1, 'ab'], [2, 'de']]
+```
+
+**3. `Array 的判断`**
+
+> 在 ES5 提供该方法之前，我们至少有如下 5 种方式去判断一个变量是否为数组。
+
+```js
+var a = [];
+// 1.基于instanceof
+a instanceof Array;
+// 2.基于constructor
+a.constructor === Array;
+// 3.基于Object.prototype.isPrototypeOf
+Array.prototype.isPrototypeOf(a);
+// 4.基于getPrototypeOf
+Object.getPrototypeOf(a) === Array.prototype;
+// 5.基于Object.prototype.toString
+Object.prototype.toString.apply(a) === '[object Array]';
+```
+
+> ES6 之后新增了一个 `Array.isArray` 方法，能直接判断数据类型是否为数组，但是如果 isArray 不存在，那么 `Array.isArray` 的 polyfill 通常可以这样写：
+
+```js
+if (!Array.isArray){
+  Array.isArray = function(arg){
+    return Object.prototype.toString.call(arg) === '[object Array]';
+  };
+}
+```
+
+**4. 改变自身的方法**
+
+> 基于 ES6，会改变自身值的方法一共有 `9` 个，分别为 `pop、push、reverse、shift、sort、splice、unshift，以及两个 ES6 新增的方法 copyWithin 和 fill`
+
+```js
+// pop方法
+var array = ["cat", "dog", "cow", "chicken", "mouse"];
+var item = array.pop();
+console.log(array); // ["cat", "dog", "cow", "chicken"]
+console.log(item); // mouse
+// push方法
+var array = ["football", "basketball",  "badminton"];
+var i = array.push("golfball");
+console.log(array); 
+// ["football", "basketball", "badminton", "golfball"]
+console.log(i); // 4
+// reverse方法
+var array = [1,2,3,4,5];
+var array2 = array.reverse();
+console.log(array); // [5,4,3,2,1]
+console.log(array2===array); // true
+// shift方法
+var array = [1,2,3,4,5];
+var item = array.shift();
+console.log(array); // [2,3,4,5]
+console.log(item); // 1
+// unshift方法
+var array = ["red", "green", "blue"];
+var length = array.unshift("yellow");
+console.log(array); // ["yellow", "red", "green", "blue"]
+console.log(length); // 4
+// sort方法
+var array = ["apple","Boy","Cat","dog"];
+var array2 = array.sort();
+console.log(array); // ["Boy", "Cat", "apple", "dog"]
+console.log(array2 == array); // true
+// splice方法
+var array = ["apple","boy"];
+var splices = array.splice(1,1);
+console.log(array); // ["apple"]
+console.log(splices); // ["boy"]
+// copyWithin方法
+var array = [1,2,3,4,5]; 
+var array2 = array.copyWithin(0,3);
+console.log(array===array2,array2);  // true [4, 5, 3, 4, 5]
+// fill方法
+var array = [1,2,3,4,5];
+var array2 = array.fill(10,0,3);
+console.log(array===array2,array2); 
+// true [10, 10, 10, 4, 5], 可见数组区间[0,3]的元素全部替换为10
+```
+
+**5. 不改变自身的方法**
+
+基于 ES7，不会改变自身的方法也有 `9` 个，分别为 `concat、join、slice、toString、toLocaleString、indexOf、lastIndexOf、未形成标准的 toSource，以及 ES7 新增的方法 includes`。
+
+```js
+// concat方法
+var array = [1, 2, 3];
+var array2 = array.concat(4,[5,6],[7,8,9]);
+console.log(array2); // [1, 2, 3, 4, 5, 6, 7, 8, 9]
+console.log(array); // [1, 2, 3], 可见原数组并未被修改
+// join方法
+var array = ['We', 'are', 'Chinese'];
+console.log(array.join()); // "We,are,Chinese"
+console.log(array.join('+')); // "We+are+Chinese"
+// slice方法
+var array = ["one", "two", "three","four", "five"];
+console.log(array.slice()); // ["one", "two", "three","four", "five"]
+console.log(array.slice(2,3)); // ["three"]
+// toString方法
+var array = ['Jan', 'Feb', 'Mar', 'Apr'];
+var str = array.toString();
+console.log(str); // Jan,Feb,Mar,Apr
+// tolocalString方法
+var array= [{name:'zz'}, 123, "abc", new Date()];
+var str = array.toLocaleString();
+console.log(str); // [object Object],123,abc,2016/1/5 下午1:06:23
+// indexOf方法
+var array = ['abc', 'def', 'ghi','123'];
+console.log(array.indexOf('def')); // 1
+// includes方法
+var array = [-0, 1, 2];
+console.log(array.includes(+0)); // true
+console.log(array.includes(1)); // true
+var array = [NaN];
+console.log(array.includes(NaN)); // true
+```
+
+> 其中 includes 方法需要注意的是，如果元素中有 0，那么在判断过程中不论是 +0 还是 -0 都会判断为 True，这里的 `includes 忽略了 +0 和 -0`
+
+**6. 数组遍历的方法**
+
+基于 ES6，不会改变自身的遍历方法一共有 12 个，分别为 `forEach、every、some、filter、map、reduce、reduceRight，以及 ES6 新增的方法 entries、find、findIndex、keys、values`
+
+```js
+// forEach方法
+var array = [1, 3, 5];
+var obj = {name:'cc'};
+var sReturn = array.forEach(function(value, index, array){
+  array[index] = value;
+  console.log(this.name); // cc被打印了三次, this指向obj
+},obj);
+console.log(array); // [1, 3, 5]
+console.log(sReturn); // undefined, 可见返回值为undefined
+// every方法
+var o = {0:10, 1:8, 2:25, length:3};
+var bool = Array.prototype.every.call(o,function(value, index, obj){
+  return value >= 8;
+},o);
+console.log(bool); // true
+// some方法
+var array = [18, 9, 10, 35, 80];
+var isExist = array.some(function(value, index, array){
+  return value > 20;
+});
+console.log(isExist); // true 
+// map 方法
+var array = [18, 9, 10, 35, 80];
+array.map(item => item + 1);
+console.log(array);  // [19, 10, 11, 36, 81]
+// filter 方法
+var array = [18, 9, 10, 35, 80];
+var array2 = array.filter(function(value, index, array){
+  return value > 20;
+});
+console.log(array2); // [35, 80]
+// reduce方法
+var array = [1, 2, 3, 4];
+var s = array.reduce(function(previousValue, value, index, array){
+  return previousValue * value;
+},1);
+console.log(s); // 24
+// ES6写法更加简洁
+array.reduce((p, v) => p * v); // 24
+// reduceRight方法 (和reduce的区别就是从后往前累计)
+var array = [1, 2, 3, 4];
+array.reduceRight((p, v) => p * v); // 24
+// entries方法
+var array = ["a", "b", "c"];
+var iterator = array.entries();
+console.log(iterator.next().value); // [0, "a"]
+console.log(iterator.next().value); // [1, "b"]
+console.log(iterator.next().value); // [2, "c"]
+console.log(iterator.next().value); // undefined, 迭代器处于数组末尾时, 再迭代就会返回undefined
+// find & findIndex方法
+var array = [1, 3, 5, 7, 8, 9, 10];
+function f(value, index, array){
+  return value%2==0;     // 返回偶数
+}
+function f2(value, index, array){
+  return value > 20;     // 返回大于20的数
+}
+console.log(array.find(f)); // 8
+console.log(array.find(f2)); // undefined
+console.log(array.findIndex(f)); // 4
+console.log(array.findIndex(f2)); // -1
+// keys方法
+[...Array(10).keys()];     // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[...new Array(10).keys()]; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+// values方法
+var array = ["abc", "xyz"];
+var iterator = array.values();
+console.log(iterator.next().value);//abc
+console.log(iterator.next().value);//xyz
+```
+
+**7. 总结**
+
+![img](http://img-repo.poetries.top/images/20210414163215.png)
+
+> 这些方法之间存在很多共性，如下：
+
+- 所有插入元素的方法，比如 `push、unshift` 一律返回数组新的长度；
+- 所有删除元素的方法，比如 `pop、shift、splice` 一律返回删除的元素，或者返回删除的多个元素组成的数组；
+- 部分遍历方法，比如 `forEach、every、some、filter、map、find、findIndex`，它们都包含 `function(value,index,array){}` 和 `thisArg` 这样两个形参。
+
+> 数组和字符串方法
+
+![img](https://poetries1.gitee.io/img-repo/2020/09/7.png) ![img](https://poetries1.gitee.io/img-repo/2020/09/8.png)
+
+**二、理解JS的类数组**
+
+> 在 JavaScript 中有哪些情况下的对象是类数组呢？主要有以下几种
+
+- 函数里面的参数对象 `arguments`；
+- 用 `getElementsByTagName/ClassName/Name` 获得的 `HTMLCollection`
+- 用 `querySelector` 获得的 `NodeList`
+
+**1. arguments对象**
+
+> arguments对象是函数中传递的参数值的集合。它是一个类似数组的对象，因为它有一个`length`属性，我们可以使用数组索引表示法`arguments[1]`来访问单个值，但它没有数组中的内置方法，如：forEach、reduce、filter和map。
+
+```js
+function foo(name, age, sex) {
+    console.log(arguments);
+    console.log(typeof arguments);
+    console.log(Object.prototype.toString.call(arguments));
+}
+foo('jack', '18', 'male');
+```
+
+这段代码比较容易，就是直接将这个函数的 arguments 在函数内部打印出来，那么我们看下这个 arguments 打印出来的结果，请看控制台的这张截图。
+
+![img](http://img-repo.poetries.top/images/20210414164546.png)
+
+> 从结果中可以看到，`typeof` 这个 `arguments` 返回的是 `object`，通过 `Object.prototype.toString.call` 返回的结果是 `'[object arguments]'`，可以看出来返回的不是 `'[object array]'`，说明 `arguments` 和数组还是有区别的。
+
+我们可以使用`Array.prototype.slice`将`arguments`对象转换成一个数组。
+
+```js
+function one() {
+  return Array.prototype.slice.call(arguments);
+}
+```
+
+> 注意:箭头函数中没有arguments对象。
+
+```js
+function one() {
+  return arguments;
+}
+const two = function () {
+  return arguments;
+}
+const three = function three() {
+  return arguments;
+}
+
+const four = () => arguments;
+
+four(); // Throws an error  - arguments is not defined
+```
+
+> 当我们调用函数four时，它会抛出一个ReferenceError: arguments is not defined error。使用rest语法，可以解决这个问题。
+
+```text
+const four = (...args) => args;
+```
+
+这会自动将所有参数值放入数组中。
+
+> arguments 不仅仅有一个 length 属性，还有一个 callee 属性，我们接下来看看这个 callee 是干什么的，代码如下所示
+
+```js
+function foo(name, age, sex) {
+    console.log(arguments.callee);
+}
+foo('jack', '18', 'male');
+```
+
+![img](http://img-repo.poetries.top/images/20210414164425.png)
+
+> 从控制台可以看到，输出的就是函数自身，如果在函数内部直接执行调用 `callee` 的话，那它就会不停地执行当前函数，直到执行到内存溢出
+
+**2. HTMLCollection**
+
+> HTMLCollection 简单来说是 HTML DOM 对象的一个接口，这个接口包含了获取到的 DOM 元素集合，返回的类型是类数组对象，如果用 typeof 来判断的话，它返回的是 'object'。它是及时更新的，当文档中的 DOM 变化时，它也会随之变化。
+
+描述起来比较抽象，还是通过一段代码来看下 `HTMLCollection` 最后返回的是什么，我们先随便找一个页面中有 form 表单的页面，在控制台中执行下述代码
+
+```js
+var elem1, elem2;
+// document.forms 是一个 HTMLCollection
+elem1 = document.forms[0];
+elem2 = document.forms.item(0);
+console.log(elem1);
+console.log(elem2);
+console.log(typeof elem1);
+console.log(Object.prototype.toString.call(elem1));
+```
+
+在这个有 form 表单的页面执行上面的代码，得到的结果如下。
+
+![img](http://img-repo.poetries.top/images/20210414164820.png)
+
+可以看到，这里打印出来了页面第一个 form 表单元素，同时也打印出来了判断类型的结果，说明打印的判断的类型和 arguments 返回的也比较类似，typeof 返回的都是 'object'，和上面的类似。
+
+另外需要注意的一点就是 HTML DOM 中的 HTMLCollection 是即时更新的，当其所包含的文档结构发生改变时，它会自动更新。下面我们再看最后一个 NodeList 类数组。
+
+**3. NodeList**
+
+> NodeList 对象是节点的集合，通常是由 querySlector 返回的。NodeList 不是一个数组，也是一种类数组。虽然 NodeList 不是一个数组，但是可以使用 for...of 来迭代。在一些情况下，NodeList 是一个实时集合，也就是说，如果文档中的节点树发生变化，NodeList 也会随之变化。我们还是利用代码来理解一下 Nodelist 这种类数组。
+
+```js
+var list = document.querySelectorAll('input[type=checkbox]');
+for (var checkbox of list) {
+  checkbox.checked = true;
+}
+console.log(list);
+console.log(typeof list);
+console.log(Object.prototype.toString.call(list));
+```
+
+> 从上面的代码执行的结果中可以发现，我们是通过有 CheckBox 的页面执行的代码，在结果可中输出了一个 NodeList 类数组，里面有一个 CheckBox 元素，并且我们判断了它的类型，和上面的 arguments 与 HTMLCollection 其实是类似的，执行结果如下图所示。
+
+![img](http://img-repo.poetries.top/images/20210414164939.png)
+
+**4. 类数组应用场景**
+
+> 1. 遍历参数操作
+
+我们在函数内部可以直接获取 `arguments` 这个类数组的值，那么也可以对于参数进行一些操作，比如下面这段代码，我们可以将函数的参数默认进行求和操作。
+
+```js
+function add() {
+    var sum =0,
+        len = arguments.length;
+    for(var i = 0; i < len; i++){
+        sum += arguments[i];
+    }
+    return sum;
+}
+add()                           // 0
+add(1)                          // 1
+add(1，2)                       // 3
+add(1,2,3,4);                   // 10
+```
+
+> 1. 定义链接字符串函数
+
+我们可以通过 arguments 这个例子定义一个函数来连接字符串。这个函数唯一正式声明了的参数是一个字符串，该参数指定一个字符作为衔接点来连接字符串。该函数定义如下。
+
+```js
+// 这段代码说明了，你可以传递任意数量的参数到该函数，并使用每个参数作为列表中的项创建列表进行拼接。从这个例子中也可以看出，我们可以在日常编码中采用这样的代码抽象方式，把需要解决的这一类问题，都抽象成通用的方法，来提升代码的可复用性
+function myConcat(separa) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return args.join(separa);
+}
+myConcat(", ", "red", "orange", "blue");
+// "red, orange, blue"
+myConcat("; ", "elephant", "lion", "snake");
+// "elephant; lion; snake"
+myConcat(". ", "one", "two", "three", "four", "five");
+// "one. two. three. four. five"
+```
+
+> 1. 传递参数使用
+
+```js
+// 使用 apply 将 foo 的参数传递给 bar
+function foo() {
+    bar.apply(this, arguments);
+}
+function bar(a, b, c) {
+   console.log(a, b, c);
+}
+foo(1, 2, 3)   //1 2 3
+```
+
+**5. 如何将类数组转换成数组**
+
+> 1. 类数组借用数组方法转数组
+
+```js
+function sum(a, b) {
+  let args = Array.prototype.slice.call(arguments);
+ // let args = [].slice.call(arguments); // 这样写也是一样效果
+  console.log(args.reduce((sum, cur) => sum + cur));
+}
+sum(1, 2);  // 3
+function sum(a, b) {
+  let args = Array.prototype.concat.apply([], arguments);
+  console.log(args.reduce((sum, cur) => sum + cur));
+}
+sum(1, 2);  // 3
+```
+
+> 1. ES6 的方法转数组
+
+```js
+function sum(a, b) {
+  let args = Array.from(arguments);
+  console.log(args.reduce((sum, cur) => sum + cur));
+}
+sum(1, 2);    // 3
+function sum(a, b) {
+  let args = [...arguments];
+  console.log(args.reduce((sum, cur) => sum + cur));
+}
+sum(1, 2);    // 3
+function sum(...args) {
+  console.log(args.reduce((sum, cur) => sum + cur));
+}
+sum(1, 2);    // 3
+```
+
+> ```
+> Array.from` 和 `ES6 的展开运算符`，都可以把 `arguments`这个类数组转换成数组 `args
+> ```
+
+类数组和数组的异同点
+
+![img](http://img-repo.poetries.top/images/20210414165705.png)
+
+> 在前端工作中，开发者往往会忽视对类数组的学习，其实在高级 JavaScript 编程中经常需要将类数组向数组转化，尤其是一些比较复杂的开源项目，经常会看到函数中处理参数的写法，例如：`[].slice.call(arguments)` 这行代码。
+
+**三、实现数组扁平化的 6 种方式**
+
+**1. 方法一：普通的递归实**
+
+普通的递归思路很容易理解，就是通过循环递归的方式，一项一项地去遍历，如果每一项还是一个数组，那么就继续往下遍历，利用递归程序的方法，来实现数组的每一项的连接。我们来看下这个方法是如何实现的，如下所示
+
+```js
+// 方法1
+var a = [1, [2, [3, 4, 5]]];
+function flatten(arr) {
+  let result = [];
+
+  for(let i = 0; i < arr.length; i++) {
+    if(Array.isArray(arr[i])) {
+      result = result.concat(flatten(arr[i]));
+    } else {
+      result.push(arr[i]);
+    }
+  }
+  return result;
+}
+flatten(a);  //  [1, 2, 3, 4，5]
+```
+
+> 从上面这段代码可以看出，最后返回的结果是扁平化的结果，这段代码核心就是循环遍历过程中的递归操作，就是在遍历过程中发现数组元素还是数组的时候进行递归操作，把数组的结果通过数组的 concat 方法拼接到最后要返回的 result 数组上，那么最后输出的结果就是扁平化后的数组
+
+**2. 方法二：利用 reduce 函数迭代**
+
+从上面普通的递归函数中可以看出，其实就是对数组的每一项进行处理，那么我们其实也可以用 `reduce` 来实现数组的拼接，从而简化第一种方法的代码，改造后的代码如下所示。
+
+```js
+// 方法2
+var arr = [1, [2, [3, 4]]];
+function flatten(arr) {
+    return arr.reduce(function(prev, next){
+        return prev.concat(Array.isArray(next) ? flatten(next) : next)
+    }, [])
+}
+console.log(flatten(arr));//  [1, 2, 3, 4，5]
+```
+
+**3. 方法三：扩展运算符实现**
+
+这个方法的实现，采用了扩展运算符和 some 的方法，两者共同使用，达到数组扁平化的目的，还是来看一下代码
+
+```js
+// 方法3
+var arr = [1, [2, [3, 4]]];
+function flatten(arr) {
+    while (arr.some(item => Array.isArray(item))) {
+        arr = [].concat(...arr);
+    }
+    return arr;
+}
+console.log(flatten(arr)); //  [1, 2, 3, 4，5]
+```
+
+从执行的结果中可以发现，我们先用数组的 some 方法把数组中仍然是组数的项过滤出来，然后执行 concat 操作，利用 ES6 的展开运算符，将其拼接到原数组中，最后返回原数组，达到了预期的效果。
+
+前三种实现数组扁平化的方式其实是最基本的思路，都是通过最普通递归思路衍生的方法，尤其是前两种实现方法比较类似。值得注意的是 reduce 方法，它可以在很多应用场景中实现，由于 reduce 这个方法提供的几个参数比较灵活，能解决很多问题，所以是值得熟练使用并且精通的
+
+**4. 方法四：split 和 toString 共同处理**
+
+> 我们也可以通过 split 和 toString 两个方法，来共同实现数组扁平化，由于数组会默认带一个 toString 的方法，所以可以把数组直接转换成逗号分隔的字符串，然后再用 split 方法把字符串重新转换为数组，如下面的代码所示。
+
+```js
+// 方法4
+var arr = [1, [2, [3, 4]]];
+function flatten(arr) {
+    return arr.toString().split(',');
+}
+console.log(flatten(arr)); //  [1, 2, 3, 4]
+```
+
+通过这两个方法可以将多维数组直接转换成逗号连接的字符串，然后再重新分隔成数组，你可以在控制台执行一下查看结果。
+
+**5. 方法五：调用 ES6 中的 flat**
+
+我们还可以直接调用 ES6 中的 flat 方法，可以直接实现数组扁平化。先来看下 flat 方法的语法：
+
+```text
+arr.flat([depth])
+```
+
+> 其中 depth 是 flat 的参数，depth 是可以传递数组的展开深度（默认不填、数值是 1），即展开一层数组。那么如果多层的该怎么处理呢？参数也可以传进 Infinity，代表不论多少层都要展开。那么我们来看下，用 flat 方法怎么实现，请看下面的代码。
+
+```js
+// 方法5
+var arr = [1, [2, [3, 4]]];
+function flatten(arr) {
+  return arr.flat(Infinity);
+}
+console.log(flatten(arr)); //  [1, 2, 3, 4，5]
+```
+
+- 可以看出，一个嵌套了两层的数组，通过将 `flat` 方法的参数设置为 `Infinity`，达到了我们预期的效果。其实同样也可以设置成 2，也能实现这样的效果。
+- 因此，你在编程过程中，发现对数组的嵌套层数不确定的时候，最好直接使用 `Infinity`，可以达到扁平化。下面我们再来看最后一种场景
+
+**6. 方法六：正则和 JSON 方法共同处理**
+
+> 我们在第四种方法中已经尝试了用 toString 方法，其中仍然采用了将 JSON.stringify 的方法先转换为字符串，然后通过正则表达式过滤掉字符串中的数组的方括号，最后再利用 JSON.parse 把它转换成数组。请看下面的代码
+
+```js
+// 方法 6
+let arr = [1, [2, [3, [4, 5]]], 6];
+function flatten(arr) {
+  let str = JSON.stringify(arr);
+  str = str.replace(/(\[|\])/g, '');
+  str = '[' + str + ']';
+  return JSON.parse(str); 
+}
+console.log(flatten(arr)); //  [1, 2, 3, 4，5]
+```
+
+可以看到，其中先把传入的数组转换成字符串，然后通过正则表达式的方式把括号过滤掉，这部分正则的表达式你不太理解的话，可以看看下面的图片
+
+![img](http://img-repo.poetries.top/images/20210414170410.png)
+
+> 通过这个在线网站 https://regexper.com/ 可以把正则分析成容易理解的可视化的逻辑脑图。其中我们可以看到，匹配规则是：全局匹配（g）左括号或者右括号，将它们替换成空格，最后返回处理后的结果。之后拿着正则处理好的结果重新在外层包裹括号，最后通过 JSON.parse 转换成数组返回。
+
+![img](http://img-repo.poetries.top/images/20210414170438.png)
+
+**四、如何用 JS 实现各种数组排序**
+
+数据结构算法中排序有很多种，常见的、不常见的，至少包含十种以上。根据它们的特性，可以大致分为两种类型：比较类排序和非比较类排序。
+
+- **比较类排序**：通过比较来决定元素间的相对次序，其时间复杂度不能突破 `O(nlogn)`，因此也称为非线性时间比较类排序。
+- **非比较类排序**：不通过比较来决定元素间的相对次序，它可以突破基于比较排序的时间下界，以线性时间运行，因此也称为线性时间非比较类排序。
+
+我们通过一张图片来看看这两种分类方式分别包括哪些排序方法。
+
+![img](http://img-repo.poetries.top/images/20210414170747.png)
+
+非比较类的排序在实际情况中用的比较少
+
+**1. 冒泡排序**
+
+> 冒泡排序是最基础的排序，一般在最开始学习数据结构的时候就会接触它。冒泡排序是一次比较两个元素，如果顺序是错误的就把它们交换过来。走访数列的工作会重复地进行，直到不需要再交换，也就是说该数列已经排序完成。请看下面的代码。
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function bubbleSort(array) {
+  const len = array.length
+  if (len < 2) return array
+  for (let i = 0; i < len; i++) {
+    for (let j = 0; j < i; j++) {
+      if (array[j] > array[i]) {
+        const temp = array[j]
+        array[j] = array[i]
+        array[i] = temp
+      }
+    }
+  }
+  return array
+}
+bubbleSort(a);  // [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+从上面这段代码可以看出，最后返回的是排好序的结果。因为冒泡排序实在太基础和简单，这里就不过多赘述了。下面我们来看看快速排序法
+
+**2. 快速排序**
+
+> 快速排序的基本思想是通过一趟排序，将待排记录分隔成独立的两部分，其中一部分记录的关键字均比另一部分的关键字小，则可以分别对这两部分记录继续进行排序，以达到整个序列有序。
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function quickSort(array) {
+  var quick = function(arr) {
+    if (arr.length <= 1) return arr
+    const len = arr.length
+    const index = Math.floor(len >> 1)
+    const pivot = arr.splice(index, 1)[0]
+    const left = []
+    const right = []
+    for (let i = 0; i < len; i++) {
+      if (arr[i] > pivot) {
+        right.push(arr[i])
+      } else if (arr[i] <= pivot) {
+        left.push(arr[i])
+      }
+    }
+    return quick(left).concat([pivot], quick(right))
+  }
+  const result = quick(array)
+  return result
+}
+quickSort(a);//  [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+> 上面的代码在控制台执行之后，也可以得到预期的结果。最主要的思路是从数列中挑出一个元素，称为 “基准”（pivot）；然后重新排序数列，所有元素比基准值小的摆放在基准前面、比基准值大的摆在基准的后面；在这个区分搞定之后，该基准就处于数列的中间位置；然后把小于基准值元素的子数列（left）和大于基准值元素的子数列（right）递归地调用 quick 方法排序完成，这就是快排的思路。
+
+**3. 插入排序**
+
+插入排序算法描述的是一种简单直观的排序算法。它的`工作原理是通过构建有序序列，对于未排序数据，在已排序序列中从后向前扫描，找到相应位置并插入，从而达到排序的效果`。来看一下代码
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function insertSort(array) {
+  const len = array.length
+  let current
+  let prev
+  for (let i = 1; i < len; i++) {
+    current = array[i]
+    prev = i - 1
+    while (prev >= 0 && array[prev] > current) {
+      array[prev + 1] = array[prev]
+      prev--
+    }
+    array[prev + 1] = current
+  }
+  return array
+}
+insertSort(a); // [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+从执行的结果中可以发现，通过插入排序这种方式实现了排序效果。插入排序的思路是基于数组本身进行调整的，首先循环遍历从 i 等于 1 开始，拿到当前的 current 的值，去和前面的值比较，如果前面的大于当前的值，就把前面的值和当前的那个值进行交换，通过这样不断循环达到了排序的目的
+
+**4. 选择排序**
+
+选择排序是一种简单直观的排序算法。它的工作原理是，`首先将最小的元素存放在序列的起始位置，再从剩余未排序元素中继续寻找最小元素，然后放到已排序的序列后面……以此类推，直到所有元素均排序完毕`。请看下面的代码。
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function selectSort(array) {
+  const len = array.length
+  let temp
+  let minIndex
+  for (let i = 0; i < len - 1; i++) {
+    minIndex = i
+    for (let j = i + 1; j < len; j++) {
+      if (array[j] <= array[minIndex]) {
+        minIndex = j
+      }
+    }
+    temp = array[i]
+    array[i] = array[minIndex]
+    array[minIndex] = temp
+  }
+  return array
+}
+selectSort(a); // [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+这样，通过选择排序的方法同样也可以实现数组的排序，从上面的代码中可以看出该排序是表现最稳定的排序算法之一，因为无论什么数据进去都是 O(n 平方) 的时间复杂度，所以用到它的时候，数据规模越小越好
+
+**5. 堆排序**
+
+堆排序是指利用堆这种数据结构所设计的一种排序算法。堆积是一个近似完全二叉树的结构，并同时满足堆积的性质，即子结点的键值或索引总是小于（或者大于）它的父节点。堆的底层实际上就是一棵完全二叉树，可以用数组实现。
+
+根节点最大的堆叫作大根堆，根节点最小的堆叫作小根堆，你可以根据从大到小排序或者从小到大来排序，分别建立对应的堆就可以。请看下面的代码
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function heap_sort(arr) {
+  var len = arr.length
+  var k = 0
+  function swap(i, j) {
+    var temp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = temp
+  }
+  function max_heapify(start, end) {
+    var dad = start
+    var son = dad * 2 + 1
+    if (son >= end) return
+    if (son + 1 < end && arr[son] < arr[son + 1]) {
+      son++
+    }
+    if (arr[dad] <= arr[son]) {
+      swap(dad, son)
+      max_heapify(son, end)
+    }
+  }
+  for (var i = Math.floor(len / 2) - 1; i >= 0; i--) {
+    max_heapify(i, len)
+  }
+   
+  for (var j = len - 1; j > k; j--) {
+    swap(0, j)
+    max_heapify(0, j)
+  }
+  
+  return arr
+}
+heap_sort(a); // [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+从代码来看，堆排序相比上面几种排序整体上会复杂一些，不太容易理解。不过你应该知道两点：
+
+- 一是堆排序最核心的点就在于排序前先建堆；
+- 二是由于堆其实就是完全二叉树，如果父节点的序号为 n，那么叶子节点的序号就分别是 `2n` 和 `2n+1`。
+
+你理解了这两点，再看代码就比较好理解了。堆排序最后有两个循环：第一个是处理父节点的顺序；第二个循环则是根据父节点和叶子节点的大小对比，进行堆的调整。通过这两轮循环的调整，最后堆排序完成。
+
+**6. 归并排序**
+
+归并排序是建立在归并操作上的一种有效的排序算法，该算法是采用分治法的一个非常典型的应用。将已有序的子序列合并，得到完全有序的序列；先使每个子序列有序，再使子序列段间有序。若将两个有序表合并成一个有序表，称为二路归并。我们先看一下代码。
+
+```js
+var a = [1, 3, 6, 3, 23, 76, 1, 34, 222, 6, 456, 221];
+function mergeSort(array) {
+  const merge = (right, left) => {
+    const result = []
+    let il = 0
+    let ir = 0
+    while (il < left.length && ir < right.length) {
+      if (left[il] < right[ir]) {
+        result.push(left[il++])
+      } else {
+        result.push(right[ir++])
+      }
+    }
+    while (il < left.length) {
+      result.push(left[il++])
+    }
+    while (ir < right.length) {
+      result.push(right[ir++])
+    }
+    return result
+  }
+  const mergeSort = array => {
+    if (array.length === 1) { return array }
+    const mid = Math.floor(array.length / 2)
+    const left = array.slice(0, mid)
+    const right = array.slice(mid, array.length)
+    return merge(mergeSort(left), mergeSort(right))
+  }
+  return mergeSort(array)
+}
+mergeSort(a); // [1, 1, 3, 3, 6, 6, 23, 34, 76, 221, 222, 456]
+```
+
+从上面这段代码中可以看到，通过归并排序可以得到想要的结果。上面提到了分治的思路，你可以从 mergeSort 方法中看到，通过 mid 可以把该数组分成左右两个数组，分别对这两个进行递归调用排序方法，最后将两个数组按照顺序归并起来。
+
+归并排序是一种稳定的排序方法，和选择排序一样，归并排序的性能不受输入数据的影响，但表现比选择排序好得多，因为始终都是 O(nlogn) 的时间复杂度。而代价是需要额外的内存空间。
+
+![img](http://img-repo.poetries.top/images/20210414171508.png)
+
+其中你可以看到排序相关的时间复杂度和空间复杂度以及稳定性的情况，如果遇到需要自己实现排序的时候，可以根据它们的空间和时间复杂度综合考量，选择最适合的排序方法
