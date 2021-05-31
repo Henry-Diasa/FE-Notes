@@ -14,6 +14,10 @@
 
 [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
 
+[283. 移动零](https://leetcode-cn.com/problems/move-zeroes/)
+
+[11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water/)
+
 #### 链表
 
 [146. LRU 缓存机制](https://leetcode-cn.com/problems/lru-cache/)
