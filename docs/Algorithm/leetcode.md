@@ -18,7 +18,15 @@
 
 [11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water/)
 
+[15. 三数之和](https://leetcode-cn.com/problems/3sum/)
+
 #### 链表
 
 [146. LRU 缓存机制](https://leetcode-cn.com/problems/lru-cache/)
+
+#### 其他
+
+[70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
+
+[66. 加一](https://leetcode-cn.com/problems/plus-one/)
 
