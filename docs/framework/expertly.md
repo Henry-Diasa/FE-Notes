@@ -36,3 +36,7 @@
 - [滚动行为](https://github.com/vuejs/vue-router/blob/dev/docs/zh/guide/advanced/scroll-behavior.md)
 - [过渡动效](https://github.com/vuejs/vue-router/blob/dev/docs/zh/guide/advanced/transitions.md)
 
+#### 操作真实DOM慢？？
+
+> https://www.zhihu.com/question/31809713/answer/53544875
+

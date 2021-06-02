@@ -6,6 +6,10 @@
 
 [算法](https://naotu.baidu.com/file/0a53d3a5343bd86375f348b2831d3610?token=5ab1de1c90d5f3ec)
 
+#### map
+
+[1. 两数之和](https://leetcode-cn.com/problems/two-sum/)
+
 #### 栈的题目
 
 [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
@@ -23,6 +27,10 @@
 #### 链表
 
 [146. LRU 缓存机制](https://leetcode-cn.com/problems/lru-cache/)
+
+[206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+
+[24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 
 #### 其他
 
