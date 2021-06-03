@@ -32,6 +32,10 @@
 
 [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 
+[141. 环形链表](https://leetcode-cn.com/problems/linked-list-cycle/)
+
+[142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
