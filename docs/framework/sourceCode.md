@@ -568,13 +568,151 @@ initAssetRegisters(Vue)
 
 #### Vue平台化的包装
 
+> `Vue` 是一个 `Multi-platform` 的项目（web和weex），不同平台可能会内置不同的组件、指令，或者一些平台特有的功能等等，那么这就需要对 `Vue` 根据不同的平台进行平台化地包装，这就是接下来我们要看的文件，这个文件也出现在我们寻找 `Vue` 构造函数的路线上，它就是：`platforms/web/runtime/index.js` 文件
 
+可以看到platforms目录有两个子目录`web`和`weex`。接下来看一下`platforms/web/runtime/index.js `文件
 
+首先是下面这些
 
+```js
+// install platform specific utils
+Vue.config.mustUseProp = mustUseProp
+Vue.config.isReservedTag = isReservedTag
+Vue.config.isReservedAttr = isReservedAttr
+Vue.config.getTagNamespace = getTagNamespace
+Vue.config.isUnknownElement = isUnknownElement
+```
 
+`Vue.config`代理的值是`core/config.js`
 
+```js
+Vue.config = {
+  optionMergeStrategies: Object.create(null),
+  silent: false,
+  productionTip: process.env.NODE_ENV !== 'production',
+  devtools: process.env.NODE_ENV !== 'production',
+  performance: false,
+  errorHandler: null,
+  warnHandler: null,
+  ignoredElements: [],
+  keyCodes: Object.create(null),
+  isReservedTag: no,
+  isReservedAttr: no,
+  isUnknownElement: no,
+  getTagNamespace: noop,
+  parsePlatformTagName: identity,
+  mustUseProp: no,
+  _lifecycleHooks: LIFECYCLE_HOOKS
+}
+```
 
+上面这些是在覆盖默认导出的`config` 对象的属性。
 
+接下来两句代码
+
+```js
+// install platform runtime directives & components
+extend(Vue.options.directives, platformDirectives)
+extend(Vue.options.components, platformComponents)
+```
+
+经过`extend`之后。`Vue.options`变为
+
+```js
+Vue.options = {
+	components: {
+		KeepAlive,
+		Transition,
+		TransitionGroup
+	},
+	directives: {
+		model,
+		show
+	},
+	filters: Object.create(null),
+	_base: Vue
+}
+```
+
+我们继续往下看代码，接下来是这段：
+
+```js
+// install platform patch function
+Vue.prototype.__patch__ = inBrowser ? patch : noop
+
+// public mount method
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  el = el && inBrowser ? query(el) : undefined
+  return mountComponent(this, el, hydrating)
+}
+```
+
+在原型上添加了`__patch__`和`$mount`
+
+现在我们就看完了 `platforms/web/runtime/index.js` 文件，该文件的作用是对 `Vue` 进行平台化地包装：
+
+- 设置平台化的 `Vue.config`。
+- 在 `Vue.options` 上混合了两个指令(`directives`)，分别是 `model` 和 `show`。
+- 在 `Vue.options` 上混合了两个组件(`components`)，分别是 `Transition` 和 `TransitionGroup`。
+- 在 `Vue.prototype` 上添加了两个方法：`__patch__` 和 `$mount`。
+
+#### With compiler
+
+接下来就是带compiler的，打开 `entry-runtime-with-compiler.js` 文件
+
+```js
+// ... 其他 import 语句
+
+// 导入 运行时 的 Vue
+import Vue from './runtime/index'
+
+// ... 其他 import 语句
+
+// 从 ./compiler/index.js 文件导入 compileToFunctions
+import { compileToFunctions } from './compiler/index'
+
+// 根据 id 获取元素的 innerHTML
+const idToTemplate = cached(id => {
+  const el = query(id)
+  return el && el.innerHTML
+})
+
+// 使用 mount 变量缓存 Vue.prototype.$mount 方法
+const mount = Vue.prototype.$mount
+// 重写 Vue.prototype.$mount 方法
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  // ... 函数体省略
+}
+
+/**
+ * 获取元素的 outerHTML
+ */
+function getOuterHTML (el: Element): string {
+  if (el.outerHTML) {
+    return el.outerHTML
+  } else {
+    const container = document.createElement('div')
+    container.appendChild(el.cloneNode(true))
+    return container.innerHTML
+  }
+}
+
+// 在 Vue 上添加一个全局API `Vue.compile` 其值为上面导入进来的 compileToFunctions
+Vue.compile = compileToFunctions
+
+// 导出 Vue
+export default Vue
+```
+
+重写了`Vue.prototype.$mount`方法，第二个是添加`Vue.compile`全局API
+
+### 以一个例子为线索
 
 
 
