@@ -1,0 +1,2 @@
+- 架构学习
+  - [技术方案设计文档模板](/structure/document.md)
