@@ -1008,15 +1008,197 @@ vm.$options = mergeOptions(
 
 #### 检查组件名称是否符合要求
 
+先看`mergeOptions`方法，通过注释可以知道这个函数在实例化和继承的时候都有用到，这里要注意两点：第一，这个函数将会产生一个新的对象；第二，这个函数不仅仅在实例化对象(即`_init`方法中)的时候用到，在继承(`Vue.extend`)中也有用到，所以这个函数应该是一个用来合并两个选项对象为一个新对象的通用程序
 
+在非生产环境下，会以 `child` 为参数调用 `checkComponents` 方法，我们看看 `checkComponents` 是做什么的，这个方法同样定义在 `core/util/options.js` 文件中，内容如下：
 
+```js
+/**
+ * Validate component names
+ */
+function checkComponents (options: Object) {
+  for (const key in options.components) {
+    validateComponentName(key)
+  }
+}
+```
 
+```js
+export function validateComponentName (name: string) {
+  if (!/^[a-zA-Z][\w-]*$/.test(name)) {
+    warn(
+      'Invalid component name: "' + name + '". Component names ' +
+      'can only contain alphanumeric characters and the hyphen, ' +
+      'and must start with a letter.'
+    )
+  }
+  if (isBuiltInTag(name) || config.isReservedTag(name)) {
+    warn(
+      'Do not use built-in or reserved HTML elements as component ' +
+      'id: ' + name
+    )
+  }
+}
+```
 
+这里判断名称是否合法有两点
 
+- 第一点是通过一个正则来判断名字的合法性
 
+- 第二点是通过`isBuiltInTag`和`isReservedTag`来判断
 
+- `isBuiltInTag`是用来检测你所注册的组件是否是内置的标签，`slot` 和 `component` 这两个名字被 `Vue` 作为内置标签而存在的，你是不能够使用的，比如这样：
 
+  ```js
+  new Vue({
+    components: {
+      'slot': myComponent
+    }
+  })
+  ```
 
+- `config.isReservedTag` 在哪里被赋值的？前面我们讲到过在 `platforms/web/runtime/index.js` 文件中有这样一段代码：
+
+  ```js
+  // install platform specific utils
+  Vue.config.mustUseProp = mustUseProp
+  Vue.config.isReservedTag = isReservedTag
+  Vue.config.isReservedAttr = isReservedAttr
+  Vue.config.getTagNamespace = getTagNamespace
+  Vue.config.isUnknownElement = isUnknownElement
+  ```
+
+  其中：
+
+  ```js
+  Vue.config.isReservedTag = isReservedTag
+  ```
+
+  就是在给 `config.isReservedTag` 赋值，其值为来自于 `platforms/web/util/element.js` 文件的 `isReservedTag` 函数，大家可以在附录 `platforms/web/util 目录下`中查看该方法的作用及实现，可知在 `Vue` 中 `html` 标签和部分 `SVG` 标签被认为是保留的。所以这段代码是在保证选项被合并前的合理合法
+
+#### 允许合并另一个实例构造者的选项
+
+我们继续看代码，接下来的一段代码同样是一个 `if` 语句块：
+
+```js
+if (typeof child === 'function') {
+  child = child.options
+}
+```
+
+这说明 `child` 参数除了是普通的选项对象外，还可以是一个函数，如果是函数的话就取该函数的 `options` 静态属性作为新的 `child`，我们想一想什么样的函数具有 `options` 静态属性呢？现在我们知道 `Vue` 构造函数本身就拥有这个属性，其实通过 `Vue.extend` 创造出来的子类也是拥有这个属性的。所以这就允许我们在进行选项合并的时候，去合并一个 `Vue` 实例构造者的选项了。
+
+#### 规范化props(normalizeProps)
+
+接着看代码，接下来是三个用来规范化选项的函数调用：
+
+```js
+normalizeProps(child, vm)
+normalizeInject(child, vm)
+normalizeDirectives(child)
+```
+
+这三个函数是用来规范选项的，什么意思呢？以 `props` 为例，我们知道在 `Vue` 中，我们在使用 `props` 的时候有两种写法，一种是使用字符串数组，如下：
+
+```js
+const ChildComponent = {
+  props: ['someData']
+}
+```
+
+另外一种是使用对象语法：
+
+```js
+const ChildComponent = {
+  props: {
+    someData: {
+      type: Number,
+      default: 0
+    }
+  }
+}
+```
+
+其实不仅仅是 `props`，在 `Vue` 中拥有多种使用方法的选项有很多，这给开发者提供了非常灵活且便利的选择，但是对于 `Vue` 来讲，这并不是一件好事儿，因为 `Vue` 要对选项进行处理，这个时候好的做法就是，无论开发者使用哪一种写法，在内部都将其规范成同一种方式，这样在选项合并的时候就能够统一处理，这就是上面三个函数的作用。
+
+现在我们就详细看看这三个规范化选项的函数都是怎么规范选项的，首先是 `normalizeProps` 函数，这看上去貌似是用来规范化 `props` 选项的，找到 `normalizeProps` 函数源码如下：
+
+```js
+/**
+ * Ensure all props option syntax are normalized into the
+ * Object-based format.
+ */
+function normalizeProps (options: Object, vm: ?Component) {
+  const props = options.props
+  if (!props) return
+  const res = {}
+  let i, val, name
+  if (Array.isArray(props)) {
+    i = props.length
+    while (i--) {
+      val = props[i]
+      if (typeof val === 'string') {
+        name = camelize(val)
+        res[name] = { type: null }
+      } else if (process.env.NODE_ENV !== 'production') {
+        warn('props must be strings when using array syntax.')
+      }
+    }
+  } else if (isPlainObject(props)) {
+    for (const key in props) {
+      val = props[key]
+      name = camelize(key)
+      res[name] = isPlainObject(val)
+        ? val
+        : { type: val }
+    }
+  } else if (process.env.NODE_ENV !== 'production') {
+    warn(
+      `Invalid value for option "props": expected an Array or an Object, ` +
+      `but got ${toRawType(props)}.`,
+      vm
+    )
+  }
+  options.props = res
+}
+```
+
+分三种情况最终把`options`转换为一个对象
+
+- 数组：遍历数组，然后将中横线转换为驼峰（camelize）。最后返回的对象类似
+
+  ```js
+  props: {
+    someData:{
+      type: null
+    }
+  }
+  ```
+
+- 对象：遍历对象，如果val还是对象的话直接使用，否则把val的值当做type
+
+  ```js
+  // 转换前
+  props: {
+    someData1: Number,
+    someData2: {
+      type: String,
+      default: ''
+    }
+  }
+  // 转换后
+  props: {
+    someData1: {
+      type: Number
+    },
+    someData2: {
+      type: String,
+      default: ''
+    }
+  }
+  ```
+
+#### 规范化inject(normalizeInject)
 
 
 

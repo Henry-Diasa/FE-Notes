@@ -24,6 +24,9 @@
 
 [15. 三数之和](https://leetcode-cn.com/problems/3sum/)
 
+[26. 删除有序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+
+
 #### 链表
 
 [146. LRU 缓存机制](https://leetcode-cn.com/problems/lru-cache/)
