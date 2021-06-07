@@ -714,6 +714,312 @@ export default Vue
 
 ### 以一个例子为线索
 
+我们有如下模板：
+
+```html
+<div id="app">{{test}}</div>
+```
+
+和这样一段 `js` 代码：
+
+```js
+var vm = new Vue({
+    el: '#app',
+    data: {
+        test: 1
+    }
+})
+```
+
+这段 `js` 代码很简单，只是简单地调用了 `Vue`，传递了两个选项 `el` 以及 `data`。这段代码的最终效果就是在页面中渲染为如下 `DOM`：
+
+```html
+<div id="app">1</div>
+```
+
+其中 `{{ test }}` 被替换成了 `1`，并且当我们尝试修改 `data.test` 的值的时候
+
+```js
+vm.$data.test = 2
+// 或
+vm.test = 2
+```
+
+那么页面的 `DOM` 也会随之变化为：
+
+```html
+<div id="app">2</div>
+```
+
+首先我们`new Vue`的时候会调用`_init`方法,这个`options`就是我们透传过来的
+
+```js
+function Vue (options) {
+  if (process.env.NODE_ENV !== 'production' &&
+    !(this instanceof Vue)
+  ) {
+    warn('Vue is a constructor and should be called with the `new` keyword')
+  }
+  this._init(options)
+}
+```
+
+```js
+options = {
+    el: '#app',
+    data: {
+        test: 1
+    }
+}
+```
+
+`_init`的开始首先这这么一段
+
+```js
+// 在Vue实例中 添加uid属性
+const vm: Component = this
+// a uid
+vm._uid = uid++
+```
+
+接下来
+
+```js
+let startTag, endTag
+/* istanbul ignore if */
+if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    startTag = `vue-perf-start:${vm._uid}`
+    endTag = `vue-perf-end:${vm._uid}`
+    mark(startTag)
+}
+
+// 中间的代码省略...
+
+/* istanbul ignore if */
+if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    vm._name = formatComponentName(vm, false)
+    mark(endTag)
+    measure(`vue ${vm._name} init`, startTag, endTag)
+}
+```
+
+这段代码主要是性能追踪的。`Vue` 提供了全局配置 `Vue.config.performance`，我们通过将其设置为 `true`，即可开启性能追踪，你可以追踪四个场景的性能
+
+- 1、组件初始化(`component init`)
+- 2、编译(`compile`)，将模板(`template`)编译成渲染函数
+- 3、渲染(`render`)，其实就是渲染函数的性能，或者说渲染函数执行且生成虚拟DOM(`vnode`)的性能
+- 4、打补丁(`patch`)，将虚拟DOM渲染为真实DOM的性能
+
+其中*组件初始化*的性能追踪就是我们在 `_init` 方法中看到的那样去实现的，其实现的方式就是在初始化的代码的开头和结尾分别使用 `mark` 函数打上两个标记，然后通过 `measure` 函数对这两个标记点进行性能计算。`mark` 和 `measure` 这两个函数可以在`core/utils` 
+
+接下来看被追踪性能的代码
+
+```js
+// a flag to avoid this being observed
+vm._isVue = true
+// merge options
+if (options && options._isComponent) {
+    // optimize internal component instantiation
+    // since dynamic options merging is pretty slow, and none of the
+    // internal component options needs special treatment.
+    initInternalComponent(vm, options)
+} else {
+    vm.$options = mergeOptions(
+    resolveConstructorOptions(vm.constructor),
+    options || {},
+    vm
+    )
+}
+/* istanbul ignore else */
+if (process.env.NODE_ENV !== 'production') {
+    initProxy(vm)
+} else {
+    vm._renderProxy = vm
+}
+// expose real self
+vm._self = vm
+initLifecycle(vm)
+initEvents(vm)
+initRender(vm)
+callHook(vm, 'beforeCreate')
+initInjections(vm) // resolve injections before data/props
+initState(vm)
+initProvide(vm) // resolve provide after data/props
+callHook(vm, 'created')
+```
+
+首先是`Vue`实例上添加`_isVue`属性，并设置为`true`，那么就代表该对象是 `Vue` 实例。这样可以避免该对象被响应系统观测（其实在其他地方也有用到，但是宗旨都是一样的，这个属性就是用来告诉你：我不是普通的对象，我是Vue实例）
+
+接下来是下面的代码
+
+```js
+// merge options
+if (options && options._isComponent) {
+    // optimize internal component instantiation
+    // since dynamic options merging is pretty slow, and none of the
+    // internal component options needs special treatment.
+    initInternalComponent(vm, options)
+} else {
+    vm.$options = mergeOptions(
+        resolveConstructorOptions(vm.constructor),
+        options || {},
+        vm
+    )
+}
+```
+
+由于我们例子中的options没有`_isComponent`,所以直接进入else分支，这段代码在 `Vue` 实例上添加了 `$options` 属性，在 `Vue` 的官方文档中，你能够查看到 `$options` 属性的作用，这个属性用于当前 `Vue` 的初始化，什么意思呢？大家要注意我们现在的阶段处于 `_init()` 方法中，在 `_init()` 方法的内部大家可以看到一系列 `init*` 的方法，比如
+
+```js
+initLifecycle(vm)
+initEvents(vm)
+initRender(vm)
+callHook(vm, 'beforeCreate')
+initInjections(vm) // resolve injections before data/props
+initState(vm)
+initProvide(vm) // resolve provide after data/props
+callHook(vm, 'created')
+```
+
+这些初始化方法都用到了`vm.$options`,那么这个`options`的产生就要依靠`mergeOptions`了。
+
+### Vue选项的规范化
+
+#### mergeOptions函数的三个参数
+
+```js
+vm.$options = mergeOptions(
+    resolveConstructorOptions(vm.constructor),
+    options || {},
+    vm
+)
+```
+
+第一个参数是resolveConstructorOptions的返回值，也就是解析构造者的options
+
+接下来我们就具体看一下它是怎么做的，首先第一句：
+
+```js
+let options = Ctor.options
+```
+
+其中 `Ctor` 即传递进来的参数 `vm.constructor`，在我们的例子中他就是 `Vue` 构造函数，可能有的同学会问：难道它还有不是 `Vue` 构造函数的时候吗？当然，当你使用 `Vue.extend` 创造一个子类并使用子类创造实例时，那么 `vm.constructor` 就不是 `Vue` 构造函数，而是子类，比如：
+
+```js
+const Sub = Vue.extend()
+const s = new Sub()
+```
+
+那么 `s.constructor` 自然就是 `Sub` 而非 `Vue`，大家知道这一点即可，但在我们的例子中，这里的 `Ctor` 就是 `Vue` 构造函数，而有关于 `Vue.extend` 的东西，我们后面会专门讨论的。
+
+所以，`Ctor.options` 就是 `Vue.options`，然后我们再看 `resolveConstructorOptions` 的返回值是什么？如下：
+
+```js
+return options
+```
+
+也就是把 `Vue.options` 返回回去了，所以这个函数的确就像他的名字那样，是用来获取构造者的 `options` 的。不过同学们可能注意到了，`resolveConstructorOptions` 函数的第一句和最后一句代码中间还有一坨包裹在 `if` 语句块中的代码，那么这坨代码是干什么的呢？
+
+我可以很明确地告诉大家，这里水稍微有那么点深，比如 `if` 语句的判断条件 `Ctor.super`，`super` 这是子类才有的属性，如下：
+
+```js
+const Sub = Vue.extend()
+console.log(Sub.super)  // Vue
+```
+
+也就是说，`super` 这个属性是与 `Vue.extend` 有关系的，事实也的确如此。除此之外判断分支内的第一句代码：
+
+```js
+const superOptions = resolveConstructorOptions(Ctor.super)
+```
+
+我们发现，又递归地调用了 `resolveConstructorOptions` 函数，只不过此时的参数是构造者的父类，之后的代码中，还有一些关于父类的 `options` 属性是否被改变过的判断和操作，并且大家注意这句代码：
+
+```js
+// check if there are any late-modified/attached options (#4976)
+const modifiedOptions = resolveModifiedOptions(Ctor)
+```
+
+我们要注意的是注释，有兴趣的同学可以根据注释中括号内的 `issue` 索引去搜一下相关的问题，这句代码是用来解决使用 `vue-hot-reload-api` 或者 `vue-loader` 时产生的一个 `bug` 的。
+
+现在大家知道这里的水有多深了吗？关于这些问题，我们在讲 `Vue.extend` 时都会给大家一一解答，不过有一个因素从来没有变，那就是 `resolveConstructorOptions` 这个函数的作用永远都是用来获取当前实例构造者的 `options` 属性的，即使 `if` 判断分支内也不例外，因为 `if` 分支只不过是处理了 `options`，最终返回的永远都是 `options`。
+
+所以根据我们的例子，`resolveConstructorOptions` 函数目前并不会走 `if` 判断分支，即此时这个函数相当于：
+
+```js
+export function resolveConstructorOptions (Ctor: Class<Component>) {
+  let options = Ctor.options
+  return options
+}
+```
+
+所以，根据我们的例子，此时的 `mergeOptions` 函数的第一个参数就是 `Vue.options`，那么大家还记得 `Vue.options` 长成什么样子吗？
+
+通过查看我们可知 `Vue.options` 如下：
+
+```js
+Vue.options = {
+	components: {
+		KeepAlive
+		Transition,
+    	TransitionGroup
+	},
+	directives:{
+	    model,
+        show
+	},
+	filters: Object.create(null),
+	_base: Vue
+}
+```
+
+第二个参数就是我们`new Vue`时传递进来的参数
+
+最终传递进`mergeOptions`里面的参数就变成下面的样子
+
+```js
+vm.$options = mergeOptions(
+  // resolveConstructorOptions(vm.constructor)
+  {
+    components: {
+      KeepAlive
+      Transition,
+      TransitionGroup
+    },
+    directives:{
+      model,
+      show
+    },
+    filters: Object.create(null),
+    _base: Vue
+  },
+  // options || {}
+  {
+    el: '#app',
+    data: {
+      test: 1
+    }
+  },
+  vm
+)
+```
+
+接下来就是`mergeOptions`具体做的事情
+
+#### 检查组件名称是否符合要求
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ### Vue 构造函数整理-原型
@@ -853,5 +1159,64 @@ Vue.version = '__VERSION__'
 
 // entry-runtime-with-compiler.js
 Vue.compile = compileToFunctions
+```
+
+#### Vue实例的设计
+
+```js
+// Vue.prototype._init
+vm._uid = uid++     // 每个Vue实例都拥有一个唯一的 id
+vm._isVue = true    // 这个表示用于避免Vue实例对象被观测(observed)
+vm.$options         // 当前 Vue 实例的初始化选项，注意：这是经过 mergeOptions() 后的
+vm._renderProxy = vm    // 渲染函数作用域代理
+vm._self = vm       // 实例本身
+
+// initLifecycle(vm)    src/core/instance/lifecycle.js **************************************************
+vm.$parent = parent
+vm.$root = parent ? parent.$root : vm
+
+vm.$children = []
+vm.$refs = {}
+
+vm._watcher = null
+vm._inactive = null
+vm._directInactive = false
+vm._isMounted = false
+vm._isDestroyed = false
+vm._isBeingDestroyed = false
+
+// initEvents(vm)   src/core/instance/events.js **************************************************
+vm._events = Object.create(null)
+vm._hasHookEvent = false
+
+// initRender(vm)   src/core/instance/render.js **************************************************
+vm._vnode = null // the root of the child tree
+vm._staticTrees = null // v-once cached trees
+
+vm.$vnode
+vm.$slots
+vm.$scopedSlots
+
+vm._c
+vm.$createElement
+
+vm.$attrs
+vm.$listeners
+
+// initState(vm)   src/core/instance/state.js **************************************************
+vm._watchers = []
+vm._data
+
+// mountComponent()   src/core/instance/lifecycle.js
+vm.$el
+
+// initComputed()   src/core/instance/state.js
+vm._computedWatchers = Object.create(null)
+
+// initProps()    src/core/instance/state.js
+vm._props = {}
+
+// initProvide()    src/core/instance/inject.js
+vm._provided
 ```
 
