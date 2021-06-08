@@ -1458,6 +1458,110 @@ function mergeField (key) {
 
 #### 选项el、propsData的合并策略
 
+```js
+/**
+ * Options with restrictions
+ */
+if (process.env.NODE_ENV !== 'production') {
+  strats.el = strats.propsData = function (parent, child, vm, key) {
+    if (!vm) {
+      warn(
+        `option "${key}" can only be used during instance ` +
+        'creation with the `new` keyword.'
+      )
+    }
+    return defaultStrat(parent, child)
+  }
+}
+```
+
+首先是一段 `if` 判断分支，判断是否有传递 `vm` 参数：
+
+```js
+if (!vm) {
+  warn(
+    `option "${key}" can only be used during instance ` +
+    'creation with the `new` keyword.'
+  )
+}
+```
+
+如果没有传递这个参数，那么便会给你一个警告，提示你 `el` 选项或者 `propsData` 选项只能在使用 `new` 操作符创建实例的时候可用。比如下面的代码：
+
+```js
+// 子组件
+var ChildComponent = {
+  el: '#app2',
+  created: function () {
+    console.log('child component created')
+  }
+}
+
+// 父组件
+new Vue({
+  el: '#app',
+  data: {
+    test: 1
+  },
+  components: {
+    ChildComponent
+  }
+})
+```
+
+`vm`参数是我们在`mergeOptions`的时候传递进来的
+
+所以我们可以理解为：策略函数中的 `vm` 来自于 `mergeOptions` 函数的第三个参数。所以当调用 `mergeOptions` 函数且不传递第三个参数的时候，那么在策略函数中就拿不到 `vm` 参数。所以我们可以猜测到一件事，那就是 `mergeOptions` 函数除了在 `_init` 方法中被调用之外，还在其他地方被调用，且没有传递第三个参数。那么到底是在哪里被调用的呢？这里可以先明确地告诉大家，就是在 `Vue.extend` 方法中被调用的，大家可以打开 `core/global-api/extend.js` 文件找到 `Vue.extend` 方法，其中有这么一段代码：
+
+```js
+Sub.options = mergeOptions(
+  Super.options,
+  extendOptions
+)
+```
+
+可以发现，此时调用 `mergeOptions` 函数就没有传递第三个参数，也就是说通过 `Vue.extend` 创建子类的时候 `mergeOptions` 会被调用，此时策略函数就拿不到第三个参数。
+
+所以最终的结论就是：*如果策略函数中拿不到 `vm` 参数，那么处理的就是子组件的选项*，花了大量的口舌解释了策略函数中判断 `vm` 的意义，实际上这些解释是必要的。
+
+我们接着看 `strats.el` 和 `strats.propsData` 策略函数的代码，在 `if` 判断分支下面，直接调用了 `defaultStrat` 函数并返回：
+
+```js
+return defaultStrat(parent, child)
+```
+
+`defaultStrat` 函数就定义在 `options.js` 文件内，源码如下：
+
+```js
+/**
+ * Default strategy.
+ */
+const defaultStrat = function (parentVal: any, childVal: any): any {
+  return childVal === undefined
+    ? parentVal
+    : childVal
+}
+```
+
+实际上 `defaultStrat` 函数就如同它的名字一样，它是一个默认的策略，当一个选项不需要特殊处理的时候就使用默认的合并策略，它的逻辑很简单：只要子选项不是 `undefined` 那么就是用子选项，否则使用父选项。
+
+但是大家还要注意一点，`strats.el` 和 `strats.propsData` 这两个策略函数是只有在非生产环境才有的，在生产环境下访问这两个函数将会得到 `undefined`，那这个时候 `mergeField` 函数的第一句代码就起作用了：
+
+```js
+// 当一个选项没有对应的策略函数时，使用默认策略
+const strat = strats[key] || defaultStrat
+```
+
+所以在生产环境将直接使用默认的策略函数 `defaultStrat` 来处理 `el` 和 `propsData` 这两个选项。
+
+
+
+
+
+
+
+
+
 
 
 
