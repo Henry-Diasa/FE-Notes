@@ -1200,6 +1200,264 @@ function normalizeProps (options: Object, vm: ?Component) {
 
 #### 规范化inject(normalizeInject)
 
+```js
+/**
+ * Normalize all injections into Object-based format
+ */
+function normalizeInject (options: Object, vm: ?Component) {
+  const inject = options.inject
+  if (!inject) return
+  const normalized = options.inject = {}
+  if (Array.isArray(inject)) {
+    for (let i = 0; i < inject.length; i++) {
+      normalized[inject[i]] = { from: inject[i] }
+    }
+  } else if (isPlainObject(inject)) {
+    for (const key in inject) {
+      const val = inject[key]
+      normalized[key] = isPlainObject(val)
+        ? extend({ from: key }, val)
+        : { from: val }
+    }
+  } else if (process.env.NODE_ENV !== 'production') {
+    warn(
+      `Invalid value for option "inject": expected an Array or an Object, ` +
+      `but got ${toRawType(inject)}.`,
+      vm
+    )
+  }
+}
+```
+
+首先是赋值`inject`和相同的引用`normalized`
+
+`inject`举例
+
+```js
+// 子组件
+const ChildComponent = {
+  template: '<div>child component</div>',
+  created: function () {
+    // 这里的 data 是父组件注入进来的
+    console.log(this.data)
+  },
+  inject: ['data']
+}
+
+// 父组件
+var vm = new Vue({
+  el: '#app',
+  // 向子组件提供数据
+  provide: {
+    data: 'test provide'
+  },
+  components: {
+    ChildComponent
+  }
+})
+```
+
+```js
+if (Array.isArray(inject)) {
+  for (let i = 0; i < inject.length; i++) {
+    normalized[inject[i]] = { from: inject[i] }
+  }
+} else if (isPlainObject(inject)) {
+  ...
+} else if (process.env.NODE_ENV !== 'production') {
+  ...
+}
+```
+
+首先是数组的处理，最终会变成下面这样
+
+如果你的 `inject` 选项是这样写的：
+
+```js
+['data1', 'data2']
+```
+
+那么将被规范化为：
+
+```js
+{
+  'data1': { from: 'data1' },
+  'data2': { from: 'data2' }
+}
+```
+
+然后是对象的处理
+
+```js
+if (Array.isArray(inject)) {
+  ...
+} else if (isPlainObject(inject)) {
+  for (const key in inject) {
+    const val = inject[key]
+    normalized[key] = isPlainObject(val)
+      ? extend({ from: key }, val)
+      : { from: val }
+  }
+} else if (process.env.NODE_ENV !== 'production') {
+  ...
+}
+```
+
+开发者所写的对象可能是这样的：
+
+```js
+let data1 = 'data1'
+
+// 这里为简写，这应该写在Vue的选项中
+inject: {
+  data1,
+  d2: 'data2',
+  data3: { someProperty: 'someValue' }
+}
+```
+
+对于这种情况，我们将会把它规范化为：
+
+```js
+inject: {
+  'data1': { from: 'data1' },
+  'd2': { from: 'data2' },
+  'data3': { from: 'data3', someProperty: 'someValue' }
+}
+```
+
+#### 规范化directives(normalizeDirectives)
+
+```js
+/**
+ * Normalize raw function directives into object format.
+ */
+function normalizeDirectives (options: Object) {
+  const dirs = options.directives
+  if (dirs) {
+    for (const key in dirs) {
+      const def = dirs[key]
+      if (typeof def === 'function') {
+        dirs[key] = { bind: def, update: def }
+      }
+    }
+  }
+}
+```
+
+这段代码是用来规范化`directives`的
+
+```js
+<div id="app" v-test1 v-test2>{{test}}</div>
+
+var vm = new Vue({
+  el: '#app',
+  data: {
+    test: 1
+  },
+  // 注册两个局部指令
+  directives: {
+    test1: {
+      bind: function () {
+        console.log('v-test1')
+      }
+    },
+    test2: function () {
+      console.log('v-test2')
+    }
+  }
+})
+```
+
+规范化后的指令当时函数的时候直接返回`bind`和`update`属性的对象。
+
+接下来是下面这一段代码
+
+```js
+const extendsFrom = child.extends
+if (extendsFrom) {
+  parent = mergeOptions(parent, extendsFrom, vm)
+}
+if (child.mixins) {
+  for (let i = 0, l = child.mixins.length; i < l; i++) {
+    parent = mergeOptions(parent, child.mixins[i], vm)
+  }
+}
+```
+
+很显然，这段代码是处理 `extends` 选项和 `mixins` 选项的，首先使用变量 `extendsFrom` 保存了对 `child.extends` 的引用，之后的处理都是用 `extendsFrom` 来做，然后判断 `extendsFrom` 是否为真，即 `child.extends` 是否存在，如果存在的话就递归调用 `mergeOptions` 函数将 `parent` 与 `extendsFrom` 进行合并，并将结果作为新的 `parent`。这里要注意，我们之前说过 `mergeOptions` 函数将会产生一个新的对象，所以此时的 `parent` 已经被新的对象重新赋值了。
+
+接着检测 `child.mixins` 选项是否存在，如果存在则使用同样的方式进行操作，不同的是，由于 `mixins` 是一个数组所以要遍历一下。
+
+### Vue选项的合并
+
+```js
+const options = {}
+let key
+for (key in parent) {
+  mergeField(key)
+}
+for (key in child) {
+  if (!hasOwn(parent, key)) {
+    mergeField(key)
+  }
+}
+function mergeField (key) {
+  const strat = strats[key] || defaultStrat
+  options[key] = strat(parent[key], child[key], vm, key)
+}
+return options
+```
+
+首先看第一个`for in`
+
+```js
+for (key in parent) {
+  mergeField(key)
+}
+```
+
+这段 `for in` 用来遍历 `parent`，并且将 `parent` 对象的键作为参数传递给 `mergeField` 函数，大家应该知道这里的 `key` 是什么，假如 `parent` 就是 `Vue.options`：
+
+```js
+Vue.options = {
+  components: {
+      KeepAlive,
+      Transition,
+      TransitionGroup
+  },
+  directives:{
+      model,
+      show
+  },
+  filters: Object.create(null),
+  _base: Vue
+}
+```
+
+在看第二个`for in`
+
+```js
+for (key in child) {
+  if (!hasOwn(parent, key)) {
+    mergeField(key)
+  }
+}
+```
+
+只有`parent` 中不存在的`key`才会进行合并
+
+```js
+function mergeField (key) {
+  const strat = strats[key] || defaultStrat
+  options[key] = strat(parent[key], child[key], vm, key)
+}
+```
+
+这句代码就定义了 `strats` 变量，且它是一个常量，这个常量的值为 `config.optionMergeStrategies`，这个 `config` 对象是全局配置对象，来自于 `core/config.js` 文件，此时 `config.optionMergeStrategies` 还只是一个空的对象。注意一下这里的一段注释：*选项覆盖策略是处理如何将父选项值和子选项值合并到最终值的函数*。也就是说 `config.optionMergeStrategies` 是一个合并选项的策略对象，这个对象下包含很多函数，这些函数就可以认为是合并特定选项的策略。这样不同的选项使用不同的合并策略，如果你使用自定义选项，那么你也可以自定义该选项的合并策略，只需要在 `Vue.config.optionMergeStrategies` 对象上添加与自定义选项同名的函数就行。而这就是 `Vue` 文档中提过的全局配置：[optionMergeStrategies](https://vuejs.org/v2/api/#optionMergeStrategies)。
+
+#### 选项el、propsData的合并策略
+
 
 
 
