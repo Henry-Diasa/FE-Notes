@@ -1554,6 +1554,8 @@ const strat = strats[key] || defaultStrat
 
 所以在生产环境将直接使用默认的策略函数 `defaultStrat` 来处理 `el` 和 `propsData` 这两个选项。
 
+#### 选项data的合并策略
+
 
 
 
