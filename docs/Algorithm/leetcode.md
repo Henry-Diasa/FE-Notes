@@ -39,9 +39,15 @@
 
 [142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
 
+[21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
+
+
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
 
 [66. 加一](https://leetcode-cn.com/problems/plus-one/)
+
+[189. 旋转数组](https://leetcode-cn.com/problems/rotate-array/)
 
