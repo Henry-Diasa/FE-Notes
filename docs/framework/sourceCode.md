@@ -1705,7 +1705,7 @@ Vue.version = '__VERSION__'
 Vue.compile = compileToFunctions
 ```
 
-#### Vue实例的设计
+### Vue实例的设计
 
 ```js
 // Vue.prototype._init

@@ -14,6 +14,10 @@
 
 [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
 
+#### 队列
+
+[933. 最近的请求次数](https://leetcode-cn.com/problems/number-of-recent-calls/)
+
 #### 双指针
 
 [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
