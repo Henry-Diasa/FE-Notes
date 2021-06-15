@@ -1,3 +1,4 @@
 - Vue
   - [熟练应用](/framework/expertly.md)
-  - [源码学习](/framework/sourceCode.md)
+  - [源码学习(Vue选项的初始化、合并等)](/framework/sourceCode.md)
+  - [源码学习(Vue数据响应式)](/framework/reactive.md)
