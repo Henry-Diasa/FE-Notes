@@ -14,6 +14,8 @@
 
 [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
 
+[155. 最小栈](https://leetcode-cn.com/problems/min-stack/)
+
 #### 双指针
 
 [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
@@ -47,7 +49,9 @@
 
 [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
 
+#### 集合
 
+[349. 两个数组的交集](https://leetcode-cn.com/problems/intersection-of-two-arrays/)
 
 #### 其他
 
