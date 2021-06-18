@@ -1359,3 +1359,558 @@ export function queueWatcher (watcher: Watcher) {
 
 我们完全可以使用 `setTimeout` 替换 `nextTick`，我们只需要执行一次 `setTimeout` 语句即可，`waiting` 变量就保证了 `setTimeout` 语句只会执行一次，这样 `flushSchedulerQueue` 函数将会在下一次事件循环开始时立即调用，但是既然可以使用 `setTimeout` 替换 `nextTick` 那么为什么不用 `setTimeout` 呢？原因就在于 `setTimeout` 并不是最优的选择，`nextTick` 的意义就是它会选择一条最优的解决方案，接下来我们就讨论一下 `nextTick` 是如何实现的。
 
+##### nextTick的实现
+
+`nextTick` 函数来自于 `src/core/util/next-tick.js` 文件，对于 `nextTick` 函数相信大家都不陌生，我们常用的 `$nextTick` 方法实际上就是对 `nextTick` 函数的封装，如下：
+
+```js
+export function renderMixin (Vue: Class<Component>) {
+  // 省略...
+  Vue.prototype.$nextTick = function (fn: Function) {
+    return nextTick(fn, this)
+  }
+  // 省略...
+}
+```
+
+`$nextTick` 方法是在 `renderMixin` 函数中挂载到 `Vue` 原型上的，可以看到 `$nextTick` 函数体只有一句话即调用 `nextTick` 函数，这说明 `$nextTick` 确实是对 `nextTick` 函数的简单包装。
+
+前面说过 `nextTick` 函数的作用相当于 `setTimeout(fn, 0)`，这里有几个概念需要大家去了解一下，即调用栈、任务队列、事件循环，`javascript` 是一种单线程的语言，它的一切都是建立在以这三个概念为基础之上的。详细内容在这里就不讨论了，读者自行补充，后面的讲解将假设大家对这些概念已经非常清楚了。
+
+我们知道任务队列并非只有一个队列，在 `node` 中更为复杂，但总的来说我们可以将其分为 `microtask` 和 `(macro)task`，并且这两个队列的行为还要依据不同浏览器的具体实现去讨论，这里我们只讨论被广泛认同和接受的队列执行行为。当调用栈空闲后每次事件循环只会从 `(macro)task` 中读取一个任务并执行，而在同一次事件循环内会将 `microtask` 队列中所有的任务全部执行完毕，且要先于 `(macro)task`。另外 `(macro)task` 中两个不同的任务之间可能穿插着UI的重渲染，那么我们只需要在 `microtask` 中把所有在UI重渲染之前需要更新的数据全部更新，这样只需要一次重渲染就能得到最新的DOM了。恰好 `Vue` 是一个数据驱动的框架，如果能在UI重渲染之前更新所有数据状态，这对性能的提升是一个很大的帮助，所有要优先选用 `microtask` 去更新数据状态而不是 `(macro)task`，这就是为什么不使用 `setTimeout` 的原因，因为 `setTimeout` 会将回调放到 `(macro)task` 队列中而不是 `microtask` 队列，所以理论上最优的选择是使用 `Promise`，当浏览器不支持 `Promise` 时再降级为 `setTimeout`。如下是 `next-tick.js` 文件中的一段代码：
+
+```js
+if (typeof Promise !== 'undefined' && isNative(Promise)) {
+  const p = Promise.resolve()
+  microTimerFunc = () => {
+    p.then(flushCallbacks)
+    // in problematic UIWebViews, Promise.then doesn't completely break, but
+    // it can get stuck in a weird state where callbacks are pushed into the
+    // microtask queue but the queue isn't being flushed, until the browser
+    // needs to do some other work, e.g. handle a timer. Therefore we can
+    // "force" the microtask queue to be flushed by adding an empty timer.
+    if (isIOS) setTimeout(noop)
+  }
+} else {
+  // fallback to macro
+  microTimerFunc = macroTimerFunc
+}
+```
+
+其中变量 `microTimerFunc` 定义在文件头部，它的初始值是 `undefined`，上面的代码中首先检测当前宿主环境是否支持原生的 `Promise`，如果支持则优先使用 `Promise` 注册 `microtask`，做法很简单，首先定义常量 `p` 它的值是一个立即 `resolve` 的 `Promise` 实例对象，接着将变量 `microTimerFunc` 定义为一个函数，这个函数的执行将会把 `flushCallbacks` 函数注册为 `microtask`。另外大家注意这句代码：
+
+```js
+if (isIOS) setTimeout(noop)
+```
+
+注释已经写得很清楚了，这是一个解决怪异问题的变通方法，在一些 `UIWebViews` 中存在很奇怪的问题，即 `microtask` 没有被刷新，对于这个问题的解决方案就是让浏览做一些其他的事情比如注册一个 `(macro)task` 即使这个 `(macro)task` 什么都不做，这样就能够间接触发 `microtask` 的刷新。
+
+使用 `Promise` 是最理想的方案，但是如果宿主环境不支持 `Promise`，我们就需要降级处理，即注册 `(macro)task`，这就是 `else` 语句块内代码所做的事情：
+
+```js
+if (typeof Promise !== 'undefined' && isNative(Promise)) {
+  // 省略...
+} else {
+  // fallback to macro
+  microTimerFunc = macroTimerFunc}
+```
+
+将 `macroTimerFunc` 的值赋值给 `microTimerFunc`。我们知道 `microTimerFunc` 用来将 `flushCallbacks` 函数注册为 `microtask`，而 `macroTimerFunc` 则是用来将 `flushCallbacks` 函数注册为 `(macro)task` 的，来看下面这段代码：
+
+```js
+if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+  macroTimerFunc = () => {
+    setImmediate(flushCallbacks)
+  }
+} else if (typeof MessageChannel !== 'undefined' && (
+  isNative(MessageChannel) ||
+  // PhantomJS
+  MessageChannel.toString() === '[object MessageChannelConstructor]'
+)) {
+  const channel = new MessageChannel()
+  const port = channel.port2
+  channel.port1.onmessage = flushCallbacks
+  macroTimerFunc = () => {
+    port.postMessage(1)
+  }
+} else {
+  /* istanbul ignore next */
+  macroTimerFunc = () => {
+    setTimeout(flushCallbacks, 0)
+  }
+}
+```
+
+将一个回调函数注册为 `(macro)task` 的方式有很多，如 `setTimeout`、`setInterval` 以及 `setImmediate` 等等，但不同的方案之间是有区别的，通过上面的代码我们可以看到 `setTimeout` 被作为最后的备选方案：
+
+而首选方案是 `setImmediate`：
+
+如果宿主环境支持原生 `setImmediate` 函数，则使用 `setImmediate` 注册 `(macro)task`，为什么首选 `setImmediate` 呢？这是有原因的，因为 `setImmediate` 拥有比 `setTimeout` 更好的性能，这个问题很好理解，`setTimeout` 在将回调注册为 `(macro)task` 之前要不停的做超时检测，而 `setImmediate` 则不需要，这就是优先选用 `setImmediate` 的原因。但是 `setImmediate` 的缺陷也很明显，就是它的兼容性问题，到目前为止只有IE浏览器实现了它，所以为了兼容非IE浏览器我们还需要做兼容处理，只不过此时还轮不到 `setTimeout` 上场，而是使用 `MessageChannel`：
+
+相信大家应该了解过 `Web Workers`，实际上 `Web Workers` 的内部实现就是用到了 `MessageChannel`，一个 `MessageChannel` 实例对象拥有两个属性 `port1` 和 `port2`，我们只需要让其中一个 `port` 监听 `onmessage` 事件，然后使用另外一个 `port` 的 `postMessage` 向前一个 `port` 发送消息即可，这样前一个 `port` 的 `onmessage` 回调就会被注册为 `(macro)task`，由于它也不需要做任何检测工作，所以性能也要优于 `setTimeout`。总之 `macroTimerFunc` 函数的作用就是将 `flushCallbacks` 注册为 `(macro)task`。
+
+现在是时候仔细看一下 `nextTick` 函数都做了什么事情了，不过为了更融入理解 `nextTick` 函数的代码，我们需要从 `$nextTick` 方法入手，如下：
+
+```js
+export function renderMixin (Vue: Class<Component>) {
+  // 省略...
+  Vue.prototype.$nextTick = function (fn: Function) {    return nextTick(fn, this)  }  // 省略...
+}
+```
+
+`$nextTick` 方法只接收一个回调函数作为参数，但在内部调用 `nextTick` 函数时，除了把回调函数 `fn` 透传之外，第二个参数是硬编码为当前组件实例对象 `this`。我们知道在使用 `$nextTick` 方法时是可以省略回调函数这个参数的，这时 `$nextTick` 方法会返回一个 `promise` 实例对象。这些功能实际上都是由 `nextTick` 函数提供的，如下是 `nextTick` 函数的签名：
+
+```js
+export function nextTick (cb?: Function, ctx?: Object) {
+  // 省略...
+}
+```
+
+`nextTick` 函数接收两个参数，第一个参数是一个回调函数，第二个参数指定一个作用域。下面我们逐个分析传递回调函数与不传递回调函数这两种使用场景功能的实现，首先我们来看传递回调函数的情况，那么此时参数 `cb` 就是回调函数，来看如下代码：
+
+```js
+export function nextTick (cb?: Function, ctx?: Object) {
+  let _resolve
+  callbacks.push(() => {
+    if (cb) {
+      try {
+        cb.call(ctx)
+      } catch (e) {
+        handleError(e, ctx, 'nextTick')
+      }
+    } else if (_resolve) {
+      _resolve(ctx)
+    }
+  })
+  // 省略
+}
+```
+
+`nextTick` 函数会在 `callbacks` 数组中添加一个新的函数，`callbacks` 数组定义在文件头部：`const callbacks = []`。注意并不是将 `cb` 回调函数直接添加到 `callbacks` 数组中，但这个被添加到 `callbacks` 数组中的函数的执行会间接调用 `cb` 回调函数，并且可以看到在调用 `cb` 函数时使用 `.call` 方法将函数 `cb` 的作用域设置为 `ctx`，也就是 `nextTick` 函数的第二个参数。所以对于 `$nextTick` 方法来讲，传递给 `$nextTick` 方法的回调函数的作用域就是当前组件实例对象，当然了前提是回调函数不能是箭头函数，其实在平时的使用中，回调函数使用箭头函数也没关系，只要你能够达到你的目的即可。另外我们再次强调一遍，此时回调函数并没有被执行，当你调用 `$nextTick` 方法并传递回调函数时，会使用一个新的函数包裹回调函数并将新函数添加到 `callbacks` 数组中。
+
+我们继续看 `nextTick` 函数的代码，如下：
+
+```js
+export function nextTick (cb?: Function, ctx?: Object) {
+  // 省略...
+  if (!pending) {
+    pending = true
+    if (useMacroTask) {
+      macroTimerFunc()
+    } else {
+      microTimerFunc()
+    }
+  }
+  // 省略...
+}
+```
+
+在将回调函数添加到 `callbacks` 数组之后，会进行一个 `if` 条件判断，判断变量 `pending` 的真假，`pending` 变量也定义在文件头部：`let pending = false`，它是一个标识，它的真假代表回调队列是否处于等待刷新的状态，初始值是 `false` 代表回调队列为空不需要等待刷新。假如此时在某个地方调用了 `$nextTick` 方法，那么 `if` 语句块内的代码将会被执行，在 `if` 语句块内优先将变量 `pending` 的值设置为 `true`，代表着此时回调队列不为空，正在等待刷新。既然等待刷新，那么当然要刷新回调队列啊，怎么刷新呢？这时就用到了我们前面讲过的 `microTimerFunc` 或者 `macroTimerFunc` 函数，我们知道这两个函数的作用是将 `flushCallbacks` 函数分别注册为 `microtask` 和 `(macro)task`。但是无论哪种任务类型，它们都将会等待调用栈清空之后才执行。如下：
+
+```js
+created () {
+  this.$nextTick(() => { console.log(1) })
+  this.$nextTick(() => { console.log(2) })
+  this.$nextTick(() => { console.log(3) })
+}
+```
+
+上面的代码中我们在 `created` 钩子中连续调用三次 `$nextTick` 方法，但只有第一次调用 `$nextTick` 方法时才会执行 `microTimerFunc` 函数将 `flushCallbacks` 注册为 `microtask`，但此时 `flushCallbacks` 函数并不会执行，因为它要等待接下来的两次 `$nextTick` 方法的调用语句执行完后才会执行，或者准确的说等待调用栈被清空之后才会执行。也就是说当 `flushCallbacks` 函数执行的时候，`callbacks` 回调队列中将包含本次事件循环所收集的所有通过 `$nextTick` 方法注册的回调，而接下来的任务就是在 `flushCallbacks` 函数内将这些回调全部执行并清空。如下是 `flushCallbacks` 函数的源码：
+
+```js
+function flushCallbacks () {
+  pending = false
+  const copies = callbacks.slice(0)
+  callbacks.length = 0
+  for (let i = 0; i < copies.length; i++) {
+    copies[i]()
+  }
+}
+```
+
+很好理解，首先将变量 `pending` 重置为 `false`，接着开始执行回调，但需要注意的是在执行 `callbacks` 队列中的回调函数时并没有直接遍历 `callbacks` 数组，而是使用 `copies` 常量保存一份 `callbacks` 的复制，然后遍历 `copies` 数组，并且在遍历 `copies` 数组之前将 `callbacks` 数组清空：`callbacks.length = 0`。为什么要这么做呢？这么做肯定是有原因的，我们模拟一下整个异步更新的流程就明白了，如下代码：
+
+```js
+created () {
+  this.name = 'HcySunYang'
+  this.$nextTick(() => {
+    this.name = 'hcy'
+    this.$nextTick(() => { console.log('第二个 $nextTick') })
+  })
+}
+```
+
+上面代码中我们在外层 `$nextTick` 方法的回调函数中再次调用了 `$nextTick` 方法，理论上外层 `$nextTick` 方法的回调函数不应该与内层 `$nextTick` 方法的回调函数在同一个 `microtask` 任务中被执行，而是两个不同的 `microtask` 任务，虽然在结果上看或许没什么差别，但从设计角度就应该这么做。
+
+我们注意上面代码中我们修改了两次 `name` 属性的值(假设它是响应式数据)，首先我们将 `name` 属性的值修改为字符串 `HcySunYang`，我们前面讲过这会导致依赖于 `name` 属性的渲染函数观察者被添加到 `queue` 队列中，这个过程是通过调用 `src/core/observer/scheduler.js` 文件中的 `queueWatcher` 函数完成的。同时在 `queueWatcher` 函数内会使用 `nextTick` 将 `flushSchedulerQueue` 添加到 `callbacks` 数组中，所以此时 `callbacks` 数组如下：
+
+```js
+callbacks = [
+  flushSchedulerQueue // queue = [renderWatcher]
+]
+```
+
+同时会将 `flushCallbacks` 函数注册为 `microtask`，所以此时 `microtask` 队列如下：
+
+```js
+// microtask 队列
+[
+  flushCallbacks
+]
+```
+
+接着调用了第一个 `$nextTick` 方法，`$nextTick` 方法会将其回调函数添加到 `callbacks` 数组中，那么此时的 `callbacks` 数组如下：
+
+```js
+callbacks = [
+  flushSchedulerQueue, // queue = [renderWatcher]
+  () => {
+    this.name = 'hcy'
+    this.$nextTick(() => { console.log('第二个 $nextTick') })
+  }
+]
+```
+
+接下来主线程处于空闲状态(调用栈清空)，开始执行 `microtask` 队列中的任务，即执行 `flushCallbacks` 函数，`flushCallbacks` 函数会按照顺序执行 `callbacks` 数组中的函数，首先会执行 `flushSchedulerQueue` 函数，这个函数会遍历 `queue` 中的所有观察者并重新求值，完成重新渲染(`re-render`)，在完成渲染之后，本次更新队列已经清空，`queue` 会被重置为空数组，一切状态还原。接着会执行如下函数：
+
+```js
+() => {
+  this.name = 'hcy'
+  this.$nextTick(() => { console.log('第二个 $nextTick') })
+}
+```
+
+这个函数是第一个 `$nextTick` 方法的回调函数，由于在执行该回调函数之前已经完成了重新渲染，所以该回调函数内的代码是能够访问更新后的DOM的，到目前为止一切都很正常，我们继续往下看，在该回调函数内再次修改了 `name` 属性的值为字符串 `hcy`，这会再次触发响应，同样的会调用 `nextTick` 函数将 `flushSchedulerQueue` 添加到 `callbacks` 数组中，但是由于在执行 `flushCallbacks` 函数时优先将 `pending` 的重置为 `false`，所以 `nextTick` 函数会将 `flushCallbacks` 函数注册为一个新的 `microtask`，此时 `microtask` 队列将包含两个 `flushCallbacks` 函数：
+
+```js
+// microtask 队列
+[
+  flushCallbacks, // 第一个 flushCallbacks
+  flushCallbacks  // 第二个 flushCallbacks
+]
+```
+
+怎么样？我们的目的达到了，现在有两个 `microtask` 任务。
+
+而另外除了将变量 `pending` 的值重置为 `false` 之外，我们要知道第一个 `flushCallbacks` 函数遍历的并不是 `callbacks` 本身，而是它的复制品 `copies` 数组，并且在第一个 `flushCallbacks` 函数的一开头就清空了 `callbacks` 数组本身。所以第二个 `flushCallbacks` 函数的一切流程与第一个 `flushCallbacks` 是完全相同。
+
+最后我们再来讲一下，当调用 `$nextTick` 方法时不传递回调函数时，是如何实现返回 `Promise` 实例对象的，实现很简单我们来看一下 `nextTick` 函数的代码，如下：
+
+```js
+export function nextTick (cb?: Function, ctx?: Object) {
+  let _resolve
+  // 省略...
+  // $flow-disable-line
+  if (!cb && typeof Promise !== 'undefined') {    return new Promise(resolve => {      _resolve = resolve    })  }}
+```
+
+如上高亮代码所示，当 `nextTick` 函数没有接收到 `cb` 参数时，会检测当前宿主环境是否支持 `Promise`，如果支持则直接返回一个 `Promise` 实例对象，并且将 `resolve` 函数赋值给 `_resolve` 变量，`_resolve` 变量声明在 `nextTick` 函数的顶部。同时再来看如下代码：
+
+```js
+export function nextTick (cb?: Function, ctx?: Object) {
+  let _resolve
+  callbacks.push(() => {
+    if (cb) {
+      try {
+        cb.call(ctx)
+      } catch (e) {
+        handleError(e, ctx, 'nextTick')
+      }
+    } else if (_resolve) {      _resolve(ctx)    }  })
+  // 省略...
+  // $flow-disable-line
+  if (!cb && typeof Promise !== 'undefined') {
+    return new Promise(resolve => {
+      _resolve = resolve
+    })
+  }
+}
+```
+
+当 `flushCallbacks` 函数开始执行 `callbacks` 数组中的函数时，如果没有传递 `cb` 参数，则直接调用 `_resolve` 函数，我们知道这个函数就是返回的 `Promise` 实例对象的 `resolve` 函数。这样就实现了 `Promise` 方式的 `$nextTick` 方法。
+
+#### $watch和watch选项的实现
+
+前面我们已经讲了足够多关于 `Watcher` 类的内容，接下来是时候看一下 `$watch` 方法以及 `watch` 选项的实现了。实际上无论是 `$watch` 方法还是 `watch` 选项，他们的实现都是基于 `Watcher` 的封装。首先我们来看一下 `$watch` 方法，它定义在 `src/core/instance/state.js` 文件的 `stateMixin` 函数中，如下：
+
+```js
+Vue.prototype.$watch = function (
+  expOrFn: string | Function,
+  cb: any,
+  options?: Object
+): Function {
+  const vm: Component = this
+  if (isPlainObject(cb)) {
+    return createWatcher(vm, expOrFn, cb, options)
+  }
+  options = options || {}
+  options.user = true
+  const watcher = new Watcher(vm, expOrFn, cb, options)
+  if (options.immediate) {
+    cb.call(vm, watcher.value)
+  }
+  return function unwatchFn () {
+    watcher.teardown()
+  }
+}
+```
+
+`$watch` 方法允许我们观察数据对象的某个属性，当属性变化时执行回调。所以 `$watch` 方法至少接收两个参数，一个要观察的属性，以及一个回调函数。通过上面的代码我们发现，`$watch` 方法接收三个参数，除了前面介绍的两个参数之后还接收第三个参数，它是一个选项参数，比如是否立即执行回调或者是否深度观测等。我们可以发现这三个参数与 `Watcher` 类的构造函数中的三个参数相匹配，如下：
+
+```js
+export default class Watcher {
+  constructor (
+    vm: Component,
+    expOrFn: string | Function,    cb: Function,    options?: ?Object,    isRenderWatcher?: boolean
+  ) {
+    // 省略...
+  }
+}
+```
+
+其实这很好理解，因为 `$watch` 方法的实现本质就是创建了一个 `Watcher` 实例对象。另外通过官方文档的介绍可知 `$watch` 方法的第二个参数既可以是一个回调函数，也可以是一个纯对象，这个对象中可以包含 `handler` 属性，该属性的值将作为回调函数，同时该对象还可以包含其他属性作为选项参数，如 `immediate` 或 `deep`。
+
+现在我们假设传递给 `$watch` 方法的第二个参数是一个函数，看看它是怎么实现的，在 `$watch` 方法内部首先执行的是如下代码：
+
+```js
+const vm: Component = this
+if (isPlainObject(cb)) {
+  return createWatcher(vm, expOrFn, cb, options)
+}
+```
+
+定义了 `vm` 常量，它是当前组件实例对象，接着检测传递给 `$watch` 的第二个参数是否是纯对象，由于我们现在假设参数 `cb` 是一个函数，所以这段 `if` 语句块内的代码不会执行。再往下是这段代码：
+
+```js
+options = options || {}
+options.user = true
+const watcher = new Watcher(vm, expOrFn, cb, options)
+```
+
+首先如果没有传递 `options` 选项参数，那么会给其一个默认的空对象，接着将 `options.user` 的值设置为 `true`，我们前面讲到过这代表该观察者实例是用户创建的，然后就到了关键的一步，即创建 `Watcher` 实例对象，多么简单的实现。
+
+再往下是一段 `if` 语句块：
+
+```js
+if (options.immediate) {
+  cb.call(vm, watcher.value)
+}
+```
+
+我们知道 `immediate` 选项用来在属性或函数被侦听后立即执行回调，如上代码就是其实现原理，如果发现 `options.immediate` 选项为真，那么会执行回调函数，不过此时回调函数的参数只有新值没有旧值。同时取值的方式是通过前面创建的观察者实例对象的 `watcher.value` 属性。我们知道观察者实例对象的 `value` 属性，保存着被观察属性的值。
+
+最后 `$watch` 方法还有一个返回值，如下：
+
+```js
+return function unwatchFn () {
+  watcher.teardown()
+}
+```
+
+`$watch` 函数返回一个函数，这个函数的执行会解除当前观察者对属性的观察。它的原理是通过调用观察者实例对象的 `watcher.teardown` 函数实现的。我们可以看一下 `watcher.teardown` 函数是如何解除观察者与属性之间的关系的，如下是 `teardown` 函数的代码：
+
+```js
+export default class Watcher {
+  // 省略...
+  /**
+   * Remove self from all dependencies' subscriber list.
+   */
+  teardown () {
+    if (this.active) {
+      // remove self from vm's watcher list
+      // this is a somewhat expensive operation so we skip it
+      // if the vm is being destroyed.
+      if (!this.vm._isBeingDestroyed) {
+        remove(this.vm._watchers, this)
+      }
+      let i = this.deps.length
+      while (i--) {
+        this.deps[i].removeSub(this)
+      }
+      this.active = false
+    }
+  }
+}
+```
+
+首先检查 `this.active` 属性是否为真，如果为假则说明该观察者已经不处于激活状态，什么都不需要做，如果为真则会执行 `if` 语句块内的代码，在 `if` 语句块内首先执行的这段代码：
+
+```js
+if (!this.vm._isBeingDestroyed) {
+  remove(this.vm._watchers, this)
+}
+```
+
+首先说明一点，每个组件实例都有一个 `vm._isBeingDestroyed` 属性，它是一个标识，为真说明该组件实例已经被销毁了，为假说明该组件还没有被销毁，所以以上代码的意思是如果组件没有被销毁，那么将当前观察者实例从组件实例对象的`vm._watchers` 数组中移除，我们知道 `vm._watchers` 数组中包含了该组件所有的观察者实例对象，所以将当前观察者实例对象从 `vm._watchers` 数组中移除是解除属性与观察者实例对象之间关系的第一步。由于这个操作的性能开销比较大，所以仅在组件没有被销毁的情况下才会执行此操作。
+
+将观察者实例对象从 `vm._watchers` 数组中移除之后，会执行如下这段代码：
+
+```js
+let i = this.deps.length
+while (i--) {
+  this.deps[i].removeSub(this)
+}
+```
+
+我们知道当一个属性与一个观察者建立联系之后，属性的 `Dep` 实例对象会收集到该观察者对象，同时观察者对象也会将该 `Dep` 实例对象收集，这是一个双向的过程，并且一个观察者可以同时观察多个属性，这些属性的 `Dep` 实例对象都会被收集到该观察者实例对象的 `this.deps` 数组中，所以解除属性与观察者之间关系的第二步就是将当前观察者实例对象从所有的 `Dep` 实例对象中移除，实现方法就如上代码所示。
+
+最后会将当前观察者实例对象的 `active` 属性设置为 `false`，代表该观察者对象已经处于非激活状态了：
+
+最后会将当前观察者实例对象的 `active` 属性设置为 `false`，代表该观察者对象已经处于非激活状态了：
+
+```js
+this.active = false
+```
+
+以上就是 `$watch` 方法的实现，以及如何解除观察的实现。不过不要忘了我们前面所讲的这些内容是假设传递给 `$watch` 方法的第二个参数是一个函数，如果不是函数呢？比如是一个纯对象，这时如下高亮的代码就会被执行
+
+```js
+Vue.prototype.$watch = function (
+  expOrFn: string | Function,
+  cb: any,
+  options?: Object
+): Function {
+  const vm: Component = this
+  if (isPlainObject(cb)) {    return createWatcher(vm, expOrFn, cb, options)  }  // 省略...
+}
+```
+
+当参数 `cb` 不是函数，而是一个纯对象，则会调用 `createWatcher` 函数，并将参数透传，注意还多传递给 `createWatcher` 函数一个参数，即组件实例对象 `vm`，那么 `createWatcher` 函数做了什么呢？`createWatcher` 函数也定义在 `src/core/instance/state.js` 文件中，如下是 `createWatcher` 函数的代码：
+
+```js
+function createWatcher (
+  vm: Component,
+  expOrFn: string | Function,
+  handler: any,
+  options?: Object
+) {
+  if (isPlainObject(handler)) {
+    options = handler
+    handler = handler.handler
+  }
+  if (typeof handler === 'string') {
+    handler = vm[handler]
+  }
+  return vm.$watch(expOrFn, handler, options)
+}
+```
+
+其实 `createWatcher` 函数的作用就是将纯对象形式的参数规范化一下，然后再通过 `$watch` 方法创建观察者。可以看到 `createWatcher` 函数的最后一句代码就是通过调用 `$watch` 函数并将其返回。来看 `createWatcher` 函数的第一段代码：
+
+```js
+if (isPlainObject(handler)) {
+  options = handler
+  handler = handler.handler
+}
+```
+
+检测参数 `handler` 是否是纯对象，有的同学可能会问：“在 `$watch` 方法中已经检测过参数 `cb` 是否是纯对象了，这里又检测了一次是否多此一举？”，其实这么做并不是多余的，因为 `createWatcher` 函数除了在 `$watch` 方法中使用之外，还会用于 `watch` 选项，而这时就需要对 `handler` 进行检测。总之如果 `handler` 是一个纯对象，那么就将变量 `handler` 的值赋给 `options` 变量，然后用 `handler.handler` 的值重写 `handler` 变量的值。举个例子，如下代码所示：
+
+```js
+vm.$watch('name', {
+  handler () {
+    console.log('change')
+  },
+  immediate: true
+})
+```
+
+最终可以等价为
+
+```js
+if (isPlainObject(handler)) {
+  options = {
+    handler () {
+      console.log('change')
+    },
+    immediate: true
+  }
+  handler = handler () {
+    console.log('change')
+  }
+}
+```
+
+这段代码说明 `handler` 除了可以是一个纯对象还可以是一个字符串，当 `handler` 是一个字符串时，会读取组件实例对象的 `handler` 属性的值并用该值重写 `handler` 的值。然后再通过调用 `$watch` 方法创建观察者，这段代码实现的目的是什么呢？看如下例子就明白了：
+
+```js
+watch: {
+  name: 'handleNameChange'
+},
+methods: {
+  handleNameChange () {
+    console.log('name change')
+  }
+}
+```
+
+上面的代码中我们在 `watch` 选项中观察了 `name` 属性，但是我们没有指定回调函数，而是指定了一个字符串 `handleNameChange`，这等价于指定了 `methods` 选项中同名函数作为回调函数。这就是如上 `createWatcher` 函数中那段高亮代码的目的。
+
+上例中我们使用了 `watch` 选项，接下来我们就顺便来看一下 `watch` 选项是如何初始化的，找到 `initState` 函数，如下：
+
+```js
+export function initState (vm: Component) {
+  vm._watchers = []
+  const opts = vm.$options
+  if (opts.props) initProps(vm, opts.props)
+  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.data) {
+    initData(vm)
+  } else {
+    observe(vm._data = {}, true /* asRootData */)
+  }
+  if (opts.computed) initComputed(vm, opts.computed)
+  if (opts.watch && opts.watch !== nativeWatch) {    initWatch(vm, opts.watch)  }}
+```
+
+如上高亮代码所示，在这个 `if` 条件语句块中，调用 `initWatch` 函数，这个函数用来初始化 `watch` 选项，至于判断条件我们就不多讲了，前面的讲解中我们已经讲解过类似的判断条件。至于 `initWatch` 函数，它就定义在 `createWatcher` 函数的上方，如下是其全部代码：
+
+```js
+function initWatch (vm: Component, watch: Object) {
+  for (const key in watch) {
+    const handler = watch[key]
+    if (Array.isArray(handler)) {
+      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i])
+      }
+    } else {
+      createWatcher(vm, key, handler)
+    }
+  }
+}
+```
+
+可以看到 `initWatch` 函数就是通过对 `watch` 选项遍历，然后通过 `createWatcher` 函数创建观察者对象的，需要注意的是上面代码中有一个判断条件，如下高亮代码所示：
+
+```js
+function initWatch (vm: Component, watch: Object) {
+  for (const key in watch) {
+    const handler = watch[key]
+    if (Array.isArray(handler)) {      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i])
+      }
+    } else {
+      createWatcher(vm, key, handler)
+    }
+  }
+}
+```
+
+通过这个条件我们可以发现 `handler` 常量可以是一个数组，`handler` 常量是什么呢？它的值是 `watch[key]`，也就是说我们在使用 `watch` 选项时可以通过传递数组来实现创建多个观察者，如下：
+
+```js
+watch: {
+  name: [
+    function () {
+      console.log('name 改变了1')
+    },
+    function () {
+      console.log('name 改变了2')
+    }
+  ]
+}
+```
+
+总的来说，在 `Watcher` 类的基础上，无论是实现 `$watch` 方法还是实现 `watch` 选项，都变得非常容易，这得益于一个良好的设计
+
+#### 深度观测的实现
