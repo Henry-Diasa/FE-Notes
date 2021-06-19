@@ -1,3 +1,4 @@
 - 架构学习
   - [技术方案设计文档模板](/structure/document.md)
   - [脚手架整体学习](/structure/scaffolding.md)
+  - [脚手架整体架构设计](/structure/scaffolding-design.md)
