@@ -10,6 +10,8 @@
 
 [1. 两数之和](https://leetcode-cn.com/problems/two-sum/)
 
+[3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+
 #### 栈的题目
 
 [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
@@ -30,6 +32,8 @@
 [15. 三数之和](https://leetcode-cn.com/problems/3sum/)
 
 [26. 删除有序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+
+[76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
 
 
 #### 链表
