@@ -2,6 +2,7 @@
 - [HTML & 浏览器](/HTML/inline-block.md)
 - [CSS](/CSS/boxModel.md)
 - [前端框架](/framework/expertly.md)
+- [HTTP](/network/http.md)
 - [数据结构与算法](/Algorithm/linearSearch.md)
 - [设计模式](/DesignPattern/创建型/单例模式.md)
 - [性能优化](/Performance/V8.md)
