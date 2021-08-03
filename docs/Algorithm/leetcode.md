@@ -221,6 +221,8 @@ function findSmallSeq(nums, k) {
 
 [559. N 叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-n-ary-tree/)
 
+[622. 设计循环队列](https://leetcode-cn.com/problems/design-circular-queue/)
+
 #### 双指针
 
 [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
