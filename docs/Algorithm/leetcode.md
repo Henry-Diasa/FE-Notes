@@ -228,6 +228,10 @@ function findSmallSeq(nums, k) {
 
 [622. 设计循环队列](https://leetcode-cn.com/problems/design-circular-queue/)
 
+[1696. 跳跃游戏 VI](https://leetcode-cn.com/problems/jump-game-vi/)
+
+![](https://s0.lgstatic.com/i/image6/M00/11/10/CioPOWA_TLCATeR6AAFTfMBlaiw858.png)
+
 #### 双指针
 
 [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
@@ -268,6 +272,24 @@ function findSmallSeq(nums, k) {
 [349. 两个数组的交集](https://leetcode-cn.com/problems/intersection-of-two-arrays/)
 
 #### 动态规划
+
+
+
+#### 堆
+
+[剑指 Offer 40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+
+[347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements/)
+
+[692. 前K个高频单词](https://leetcode-cn.com/problems/top-k-frequent-words/)
+
+[973. 最接近原点的 K 个点](https://leetcode-cn.com/problems/k-closest-points-to-origin/)
+
+[23. 合并K个升序链表](https://leetcode-cn.com/problems/merge-k-sorted-lists/)
+
+[373. 查找和最小的K对数字](https://leetcode-cn.com/problems/find-k-pairs-with-smallest-sums/)
+
+
 
 
 
