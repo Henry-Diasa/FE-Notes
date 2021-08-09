@@ -253,11 +253,15 @@ function findSmallSeq(nums, k) {
 
 [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
 
+[203. 移除链表元素](https://leetcode-cn.com/problems/remove-linked-list-elements/)
+
 [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 
 [141. 环形链表](https://leetcode-cn.com/problems/linked-list-cycle/)
 
 [142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+
+[相关链接](https://kaiwu.lagou.com/course/courseInfo.htm?courseId=685#/detail/pc?id=6694)
 
 [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
 
@@ -266,6 +270,99 @@ function findSmallSeq(nums, k) {
 [2. 两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
 
 [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+
+[82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
+
+[23. 合并K个升序链表](https://leetcode-cn.com/problems/merge-k-sorted-lists/)
+
+[25. K 个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+
+[逆向反转k](https://github.com/lagoueduCol/Algorithm-Dryad/blob/main/05.LinkedList/25.%E9%80%86%E5%90%91k%E4%B8%AA%E4%B8%80%E7%BB%84%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A8.java)
+
+[19. 删除链表的倒数第 N 个结点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
+
+**拆分链表**
+
+> 【题目】给定一个链表，需要把链表从中间拆分成长度相等的两半（如果链表长度为奇数，那么拆分之后，前半部分长度更长一点）。
+>
+> 输入：[1->2->3->4->5]
+>
+> 输出：[1->2->3, 4->5]
+
+```java
+class Solution {
+
+    private ListNode findMiddleNode(ListNode head) {
+
+        // 注意这里转化为带假头的链表，免去了空链表的判断
+
+        ListNode dummy = new ListNode();
+
+        dummy.next = head;
+
+        // 注意，假头并不算是链表的一部分，所以这里是从head开始走
+
+        ListNode s2 = head;
+
+        ListNode s1 = head;
+
+        // dummy就是head的前驱，所以pre要指向dummy.
+
+        ListNode pre = dummy;
+
+        // 两个指针开始同时走
+
+        // 因为s2指针每次都要走两步，所以判空需要这样判断。
+
+        while (s2 != null && s2.next != null) {
+
+            pre = s1;
+
+            s1 = s1.next;
+
+            s2 = s2.next.next;
+
+        }
+
+        // 当有偶数个结点的时候，s2是空指针，
+
+        // 此时，s1位于后半部分指针的头部，因此需要返回s1的前驱。
+
+        // 当有奇数个结点的时候，s2是最后一个结点，
+
+        // 此时s1指针位于前半部分的最后，直接返回s1即可。
+
+        return s2 != null ? s1 : pre;
+
+    }
+
+    public ListNode[] split(ListNode head) {
+
+        // 这里获取了链表的中间结点
+
+        ListNode mid = findMiddleNode(head);
+
+        // 拿到链表的中间结点之后，可以得到链表的后半部分的开头
+
+        ListNode back = mid.next;
+
+        // 把链表拆分为两半
+
+        mid.next = null;
+
+        // 返回两个链表的头部
+
+        return new ListNode[]{head, back};
+
+    }
+
+}
+
+```
+
+[143. 重排链表](https://leetcode-cn.com/problems/reorder-list/)
+
+![](https://s0.lgstatic.com/i/image6/M01/3E/39/CioPOWCYmIWAFXX4AASqbS526bc322.png)
 
 #### 集合
 
@@ -289,9 +386,15 @@ function findSmallSeq(nums, k) {
 
 [373. 查找和最小的K对数字](https://leetcode-cn.com/problems/find-k-pairs-with-smallest-sums/)
 
+[1642. 可以到达的最远建筑](https://leetcode-cn.com/problems/furthest-building-you-can-reach/)
 
+[1705. 吃苹果的最大数目](https://leetcode-cn.com/problems/maximum-number-of-eaten-apples/)
 
+[871. 最低加油次数](https://leetcode-cn.com/problems/minimum-number-of-refueling-stops/)
 
+[743. 网络延迟时间](https://leetcode-cn.com/problems/network-delay-time/)
+
+![](https://s0.lgstatic.com/i/image6/M00/13/4A/Cgp9HWBB-QCAcvk-AADd5wNIZG0008.png)
 
 #### 其他
 
