@@ -396,6 +396,36 @@ class Solution {
 
 ![](https://s0.lgstatic.com/i/image6/M00/13/4A/Cgp9HWBB-QCAcvk-AADd5wNIZG0008.png)
 
+#### 树
+
+[144. 二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
+
+[98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
+
+[100. 相同的树](https://leetcode-cn.com/problems/same-tree/)
+
+[572. 另一棵树的子树](https://leetcode-cn.com/problems/subtree-of-another-tree/)
+
+[113. 路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
+
+[94. 二叉树的中序遍历](https://leetcode-cn.com/problems/binary-tree-inorder-traversal/)
+
+[783. 二叉搜索树节点最小距离](https://leetcode-cn.com/problems/minimum-distance-between-bst-nodes/)
+
+[99. 恢复二叉搜索树](https://leetcode-cn.com/problems/recover-binary-search-tree/)
+
+[450. 删除二叉搜索树中的节点](https://leetcode-cn.com/problems/delete-node-in-a-bst/)
+
+[701. 二叉搜索树中的插入操作](https://leetcode-cn.com/problems/insert-into-a-binary-search-tree/)
+
+[700. 二叉搜索树中的搜索](https://leetcode-cn.com/problems/search-in-a-binary-search-tree/)
+
+[145. 二叉树的后序遍历](https://leetcode-cn.com/problems/binary-tree-postorder-traversal/)
+
+[236. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree/)
+
+[105. 从前序与中序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
