@@ -1,0 +1,207 @@
+### react基本使用
+
+- 获取变量  插值 `{}`
+
+- 表达式
+
+- 子元素
+
+- class => className
+
+- Style   `<p style={{fontSize: '30px'}}>xx</p>`
+
+- 原生html
+
+  ```js
+  const rawHtmlData = {
+     __html: '<span>测试</span>'
+  }
+  
+  const rawHtmlElem = <div>
+  	<p dangerouslySetInnerHTML={rawHtmlData}></p>
+  </div>
+  ```
+
+- 条件判断
+
+  - if else
+  - 三元表达式
+  - && || 
+
+- 列表渲染
+
+  - map key
+
+- 事件
+
+  - onClick  this 在constructor中bind
+
+  - 绑定的事件也可以静态方法 
+
+    ```js
+    clickHandler = () => {
+       console.log('ok')
+    }
+    ```
+
+  - 获取event
+
+    > 这个event不是原生的event，而是一个合成事件(SyntheticEvent)，模拟出来DOM事件所有能力。获取原生事件需要使用nativeEvent。所有的事件都被挂载到document上(react 16)。react17以后事件就绑定在root组件
+
+    ```js
+    clickHandler1 = (event) => {
+       event.preventDefault()
+       event.stopPropagation()
+       
+       console.log('event', event)
+       console.log('event.__proto__.constructor', event.__proto__.constructor)
+       
+       console.log('nativeEvent', event.nativeEvent)
+       console.log('nativeEvent target', event.nativeEvent.target)
+       console.log('nativeEvent current target', event.nativeEvent.currentTarget) // document
+    }
+    ```
+
+  - 传递自定义参数
+
+    ```
+    <div onClick={this.clickHandler.bind(this, 'name', 'age')}></div>
+    
+    
+    clickHandler = (name, age, event) => {
+       
+    }
+    ```
+
+- 表单
+
+  - 受控组件 (受state控制)
+  - input textarea select 用value
+  - Checkbox radio 用checked
+
+- 组件使用
+
+  - props传递数据
+  - props传递事件
+  - 类型检查（propTypes）
+
+- setState
+
+  - 不可变值
+
+    > 不要直接修改 state。要通过setState来修改一个新的值
+    >
+    > 修改数组的值不能通过push、pop等改变原数组的操作，要返回一个新数组
+    >
+    > 对象类型一样 也需要重新设置一个新的对象
+
+  - 可能是异步更新 (也可能是同步)
+
+    > 默认是异步的，可以通过回调函数中获取最新的值
+    >
+    > 在setTimeout中是同步的
+    >
+    > 在自定义的DOM事件中是同步的
+
+  - 可能会被合并
+
+    ```js
+    // 传入对象，会被合并  执行结果只一次  +1
+    this.setState({
+    	count: this.state.count + 1
+    })
+    this.setState({
+    	count: this.state.count + 1
+    })
+    this.setState({
+    	count: this.state.count + 1
+    })
+    
+    // 传入函数 不会被合并 执行结果+3
+    this.setState((prevState, props) => {
+      return {
+        count: prevState.count + 1
+      }
+    })
+    
+    this.setState((prevState, props) => {
+      return {
+        count: prevState.count + 1
+      }
+    })
+    
+    this.setState((prevState, props) => {
+      return {
+        count: prevState.count + 1
+      }
+    })
+    ```
+
+- 生命周期
+
+  - 单组件生命周期 （componentWillmount、didMount、shouldComponentUpdate、didUpdate、getDerivedStateFromProps、getSnapshotBeforeUpdate）
+  - 父子组件生命周期，和vue的一样
+
+### react高级特性
+
+#### 函数组件
+
+- 纯函数，输入props，输出JSX
+- 没有实例，没有生命周期，没有state
+- 不能扩展其他方法
+
+#### 非受控组件
+
+- ref
+- defaultValue defaultChecked
+- 手动操作DOM元素
+
+- 使用场景
+  - 必须手动操作DOM元素，setState实现不了
+  - 文件上传 `<input type=file>`
+  - 某些富文本编辑器，需要传入DOM元素
+
+#### Portals
+
+- 组件默认会按照既定层次嵌套渲染
+- 如何让组件渲染到父组件以外
+
+```
+ReactDOM.createPortal(
+  <div>{this.props.children}</div>, // fixed的元素
+  document.body
+)
+```
+
+- 场景
+  - Overflow: hidden
+  - 父组件z-index值太小
+  - fixed需要放在body第一层级
+
+#### context
+
+- 公共信息（语言、主题）如何传递给每个组件
+- 用props太繁琐
+- 跨组件之间通信  createContext  Provider Consumer
+
+#### 异步组件
+
+- import()
+- React.lazy
+- React.Suspense
+
+```
+const ContextDemo = React.lazy(() => import('./demo'))
+
+
+render() {
+   return <>
+   	<React.Suspense fallback={<div>loading...</div>}>
+   		<ContextDemo />
+   	</React.Suspense>
+   </>
+}
+```
+
+
+
