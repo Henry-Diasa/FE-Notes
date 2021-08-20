@@ -334,3 +334,82 @@ render() {
   - 路由模式（hash、H5 history）
   - 路由配置 （动态路由、懒加载）
 
+### react原理
+
+#### 函数式编程
+
+- 一种编程范式
+- 纯函数
+- 不可变值
+
+#### vdom和diff
+
+- h函数
+- vnode数据结构
+- patch函数
+
+#### JSX本质
+
+- JSX等同于Vue模板
+- Vue模板不是html
+- JSX也不是JS
+- 经过babel转义为React.createElement 生成vnode
+
+#### 合成事件
+
+- 所有的事件挂载到document上
+- event不是原生的，是SyntheticEvent合成事件对象
+- 和Vue不同，和DOM事件也不同
+
+#### 为何要合成事件机制
+
+- 更好的兼容性和跨平台
+- 载到document,减少内存消耗，避免频繁解绑
+- 方便事件的统一管理
+- react17事件绑定到root (有利于多个react版本并存，微前端)
+
+#### setState 和 batchUpdate
+
+- 有时异步（普通使用），有时同步（setTimeout、DOM事件）
+
+- 有时合并（对象形式），有时不合并（函数形式）
+
+- 核心要点
+
+  - setState主流程
+
+  - batchUpdate机制
+
+    > setState无所谓异步还是同步
+    >
+    > 看是否能命中batchUpdate机制 （默认是批量更新的）
+    >
+    > 判断isBatchingUpdates变量（正常执行一个函数时isBatchingUpdates为true，待函数执行完置为false。当遇到异步的时候，执行到异步代码的时候，isBatchingUpdates已经置为false，也就是变成同步更新了）
+
+  - transaction（事务）机制 （before、after函数）
+
+#### 组件渲染和更新过程
+
+**渲染**
+
+- Props state
+- render() 生成vnode
+- patch(elem, vnode)
+
+**更新**
+
+- setState(newState) -> dirtyComponent(可能有子组件)
+- render()生成newVnode
+- patch(vnode, newVnode)
+
+**更新的两个阶段**
+
+- 上述的patch被拆分为两个阶段
+- Reconciliation 阶段 -  执行diff算法，纯js计算
+- commit阶段 -  将diff结果渲染DOM
+
+#### fiber
+
+- 将Reconciliation 阶段进行任务拆分（commit无法拆分）
+- DOM需要渲染时暂停，空闲时恢复
+- window.requestIdleCallback
