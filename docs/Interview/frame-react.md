@@ -203,5 +203,134 @@ render() {
 }
 ```
 
+#### 性能优化
 
+- shouldComponentUpdate
+
+  > react默认： 父组件有更新，子组件则无条件也更新
+  >
+  > 如果子组件的props值没有改变，但是依然会有无意义的更新，因此可以依靠SCU控制不进行更新
+  >
+  > 必须配合不可变值一起使用
+
+  ```
+  shouldComponentUpdate(nextProps, nextState) {
+    if(nextState.count!==this.state.count) {
+      return true
+    }
+  	return false
+  }
+  ```
+
+- PureComponent 和 memo
+
+  > PureComponent,SCU中实现了浅比较
+  >
+  > memo,函数组件中的PureComponent
+  >
+  > 浅比较已适用大部分情况（尽量不要做深度比较）
+
+- 不可变值 immutable.js
+
+  > 彻底拥抱 不可变值
+  >
+  > 基于共享数据（不是深拷贝），速度好
+  >
+  > 有一定的学习和迁移成本，按需使用
+
+#### 公共逻辑的抽离
+
+- Mixin，已被React弃用
+
+- HOC
+
+  - Redux connect 是高阶组件
+
+    ```
+    import {connect} from 'react-redux'
+    
+    const VisibleTodoList = connect(
+    	mapStateToProps,
+    	mapDispatchToProps
+    )(TodoList)
+    
+    export default VisibleTodoList
+    ```
+
+- render props
+
+  ```
+  class Factory extends React.Component {
+  	constructor() {
+  	  this.state = {
+  	    
+  	  }
+  	}
+  	render() {
+  	  return <div>{this.props.render(this.state)}</div>
+  	}
+  }
+  
+  const App = () => (
+  	<Factory render={
+  			(props) => <p>{props.a}{props.b}</p>
+  	}>
+  )
+  ```
+
+#### Redux使用
+
+- store state
+
+- reducer
+
+- action
+
+- 单向数据流
+
+  - Dispatch(action)
+  - Reducer -> newState
+  - subscribe触发通知
+
+- react-redux
+
+  - Provider
+  - connect
+  - mapStateToProps
+  - mapDispatchToProps
+
+- 异步action
+
+  > 需要借助redux-thunk中间件。还有redux-promise redux-saga等
+
+  ```
+  // 同步action
+  export const addTodo = text => {
+    // 返回action 对象
+    return {
+      type: 'ADD_TODO',
+      text
+    }
+  }
+  
+  // 异步action
+  export const addTodoAsync = text => {
+    // 返回函数，其中有dispatch 参数
+    return (dispatch) => {
+      // ajax异步获取数据
+      fetch(url).then(res=>{
+        // 执行异步action
+        dispatch(addTodo(res.text))
+      })
+    }
+  }
+  ```
+
+- redux中间件
+
+  > 加强dispatch能力
+
+- react-router
+  - 路由模式（hash、H5 history）
+  - 路由配置 （动态路由、懒加载）
 

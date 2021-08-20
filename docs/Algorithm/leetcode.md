@@ -426,6 +426,123 @@ class Solution {
 
 [105. 从前序与中序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
 
+[148. 排序链表](https://leetcode-cn.com/problems/sort-list/)
+
+
+
+#### 排序
+
+[剑指 Offer 51. 数组中的逆序对](https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/)
+
+[315. 计算右侧小于当前元素的个数](https://leetcode-cn.com/problems/count-of-smaller-numbers-after-self/)
+
+[4. 寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+
+[88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+
+[75. 颜色分类](https://leetcode-cn.com/problems/sort-colors/)
+
+[136. 只出现一次的数字](https://leetcode-cn.com/problems/single-number/)
+
+**第K小的数**
+
+> 【**题目**】给定一个数组，请找出第 k 小的数（最小的数为第 1 小）。
+>
+> 输入：A = [2, 4, 1, 5, 3], k = 3
+>
+> 输出：3
+
+```java
+void swap(int[] A, int i, int j) {
+
+  int t = A[i];
+
+  A[i] = A[j];
+
+  A[j] = t;
+
+}
+
+// 注意这里区间为[b, e), k也是从0开始算的
+
+int kth(int[] A, int b, int e, int k) {
+
+  // 如果为空
+
+  if (b >= e) {
+
+    return 0;
+
+  }
+
+  // 如果只有一个元素
+
+  if (b + 1 >= e) {
+
+    return A[b];
+
+  }
+
+  // 进行三路切分
+
+  final int x = A[b + ((e - b) >> 1)];
+
+  int i = b;
+
+  int l = b;
+
+  int r = e - 1;
+
+  while (i <= r) {
+
+    if (A[i] < x)
+
+      swap(A, l++, i++);
+
+    else if (A[i] == x)
+
+      i++;
+
+    else
+
+      swap(A, r--, i);
+
+  }
+
+  // 分别拿到三段的长度
+
+  final int lcnt = l - b;
+
+  final int mcnt = i - l;
+
+  // 如果第k个数落在左区间
+
+  if (k < lcnt)
+
+    return kth(A, b, l, k);
+
+  // 如果第k个数落在右区间
+
+  if (k >= (lcnt + mcnt))
+
+    return kth(A, i, e, k - lcnt - mcnt);
+
+  // 如果第k个数落在中间，那么直接返回x
+
+  return x;
+
+}
+
+int kthNumber(int[] A, int n, int k) { 
+
+  return kth(A, 0, n, k - 1);
+
+}
+
+```
+
+![](https://s0.lgstatic.com/i/image6/M00/26/50/Cgp9HWBa166AD9hdAAKp0wZR38g493.png)
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
