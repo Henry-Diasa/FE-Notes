@@ -543,6 +543,121 @@ int kthNumber(int[] A, int n, int k) {
 
 ![](https://s0.lgstatic.com/i/image6/M00/26/50/Cgp9HWBa166AD9hdAAKp0wZR38g493.png)
 
+**二分排序**
+
+```
+function binarySearch(A, target) {
+  if(!A || A.length==0) {
+    return false
+  }
+  // 首先设定初始区间，这里我们采用开闭原则[l, r)
+  let l = 0, r = A.length
+  // 循环结束的判断条件是整个区间为空区间，那么运行结束。
+  // 我们使用的是开闭原则来表示一个区间，所以当l < r的时候
+  // 我们要查找的区间还不是一个空区间。
+  while(l<r){
+    let m = l + (r - l) / 2
+    if(A[m] == target) {
+     return true
+    }
+    
+    if(A[m] < target) {
+     l = m + 1
+    }else{
+     r = m
+    }
+  }
+  
+  return false
+}
+```
+
+**有序数组中最左边的元素**
+
+> 【**题目**】给定一个有序数组，返回指定元素在数组的最左边的位置
+>
+> 输入：A = [1, 2, 2, 2, 2, 3, 3], target = 2
+>
+> 输出：1
+>
+> 解释：第一个出现的 2 位于下标 1，是从左往右看时，第一个出现 2 的位置。
+
+```
+int lowerBound(long[] A, int n, long target) {
+
+  int l = 0, r = n;
+
+  while (l < r) {
+
+    final int m = l + ((r - l) >> 1);
+
+    if (A[m] < target) {
+
+      l = m + 1;
+
+    } else {
+
+      r = m;
+
+    }
+
+  }
+
+  return l;
+
+}
+
+```
+
+**写一个函数 upperBound 寻找数组中给定元素的上界**
+
+> 上界是刚好比 target 大的那个元素的位置。比如 A = [1, 1, 100, 100]，target = 1，那么 upperBound 应该返回下标 2
+
+```
+int upperBound(long[] A, int n, long target) {
+
+  int l = 0, r = n;
+
+  while (l < r) {
+
+    final int m = l + ((r - l) >> 1);
+
+    if (A[m] <= target) {
+
+      l = m + 1;
+
+    } else {
+
+      r = m;
+
+    }
+
+  }
+
+  return l;
+
+}
+
+```
+
+[34. 在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
+
+[35. 搜索插入位置](https://leetcode-cn.com/problems/search-insert-position/)
+
+[852. 山脉数组的峰顶索引](https://leetcode-cn.com/problems/peak-index-in-a-mountain-array/)
+
+**给定一个有序数组，找出数组中下标与值相等的那些数。** [链接](https://hub.fastgit.org/lagoueduCol/Algorithm-Dryad/blob/main/09.BinarySearch/69.%E6%95%B0%E7%BB%84%E4%B8%AD%E6%95%B0%E5%80%BC%E5%92%8C%E4%B8%8B%E6%A0%87%E7%9B%B8%E7%AD%89%E7%9A%84%E5%85%83%E7%B4%A0.java?fileGuid=xxQTRXtVcqtHK6j8)
+
+**给定一个有序数组，找出数组中下标与值相等的数的范围。**[链接](https://hub.fastgit.org/lagoueduCol/Algorithm-Dryad/blob/main/09.BinarySearch/69.%E6%95%B0%E7%BB%84%E4%B8%AD%E6%95%B0%E5%80%BC%E5%92%8C%E4%B8%8B%E6%A0%87%E7%9B%B8%E7%AD%89%E7%9A%84%E5%85%83%E7%B4%A0.2.java?fileGuid=xxQTRXtVcqtHK6j8)
+
+[209. 长度最小的子数组](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
+
+[76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
+
+[33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+
+
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
