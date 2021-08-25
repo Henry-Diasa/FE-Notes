@@ -658,6 +658,145 @@ int upperBound(long[] A, int n, long target) {
 
 
 
+**冒泡排序**
+
+```
+function swap(A, i, j) {
+  let temp = A[i]
+  A[i] = A[j]
+  A[j] = temp
+}
+function bubbleSort(arr) {
+  // n - 1轮循环
+  for(let i = 0;i<arr.length-1；i++){
+  	for(let j = 0;j<arr.length - 1 - i;j++) {
+  	  // 保证j+1有意义 所有循环到length - 1
+  	  // - i 是因为每循环一次 就可以排除掉最大的那一个
+  	  if(arr[j] > arr[j+1]) {
+  	  	swap(arr, j, j+1)
+  	  }
+  	}
+  }
+}
+```
+
+**选择排序**
+
+```
+function selectSort(arr) {
+	// n - 1 轮
+	for(let i = 0;i<arr.length-1;i++) {
+		let min = arr[i]
+		let minIndex = i
+		// 要保证可以选择到最后一个元素
+		for(let j = i;j<arr.length;j++) {
+			if(arr[j]<min) {
+			 	min = arr[j]
+			 	minIndex = j
+			}
+		}
+		swap(arr,i,minIndex)
+	}
+}
+```
+
+**插入排序**
+
+```
+function insertSort(arr) {
+	// 插入排序 从第二项开始插入
+	for(let i = 1;i<arr.length;i++) {
+		let insertVal = arr[i]
+		let j = i-1
+		while(j>=0 && arr[j] > insertVal) {
+		  // 插入的值 小于当前的值 所有元素向后移动
+			arr[j+1] = arr[j]
+			j--
+		}
+		arr[j+1] = insertVal
+	}
+}
+```
+
+**快速排序**
+
+```
+function quickSort(arr, start, end) {
+	let low = start
+	let high = end
+	let temp = arr[low]
+	
+	while(low<high) {
+		while(low<high && arr[high]>=temp) {
+			high--
+		}
+		arr[low] = arr[high]
+		
+		while(low<high && arr[low] <= temp) {
+			low++
+		}
+		arr[high] = arr[low]
+	}
+	arr[high] = temp
+	
+	if(start<low -1) {
+		quickSort(arr, start, low-1)
+	}
+	if(low+1<end) {
+		quickSort(arr, low+1, end)
+	}
+	return
+}
+```
+
+**归并排序**
+
+```
+function mergeSort(arr) {
+ let temp = []
+ // 分
+ sort(arr, 0, arr.length - 1, temp)
+}
+
+function sort(arr, left, right, temp) {
+	let mid = (left + right) / 2
+	if(left < right) {
+		sort(arr, left, mid, temp)
+		sort(arr, mid+1, right, temp)
+		merge(arr,left,right,temp)
+	}
+}
+
+function merge(arr, left, right, temp) {
+	let mid = (left + right) / 2
+	let l = left
+	let r = mid+1
+	let index = 0
+	while(l<=mid && r<=right) {
+		if(arr[l]<arr[r]) {
+			temp[index++] = arr[l++]
+		}else{
+			temp[index++] = arr[r++]
+		}
+	}
+	
+	while(l<=mid){
+		temp[index++] = arr[l++]
+	}
+	
+	while(r<=right) {
+		temp[index++] = arr[r++]
+	}
+	
+	index = 0
+	while(left<=right) {
+		arr[left++] = temp[index++]
+	}
+}
+```
+
+
+
 #### 其他
 
 [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)

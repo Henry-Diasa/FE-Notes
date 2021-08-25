@@ -199,6 +199,29 @@ alert('get js data from parent ---> ' + window.parent.user);
 - `forEach`方法，是最基本的方法，就是遍历与循环，默认有3个传参：分别是遍历的数组内容`item`、数组索引`index`、和当前遍历数组`Array`
 - `map`方法，基本用法与`forEach`一致，但是不同的，它会返回一个新的数组，所以在callback需要有`return`值，如果没有，会返回`undefined`
 
+#### WekMap的应用
+
+- key是弱引用的，深拷贝
+
+- 私有变量
+
+  ```js
+  var stack = (function(){
+  	var vm = new WekMap()
+  	return class {
+  		constructor(){
+  			vm.set(this, [])
+  		}
+  		push(elem) {
+  			vm.get(this).push(elem)
+  		}
+  		toString(elem) {
+  			console.log(vm.get(this))
+  		}
+  	}
+  })()
+  ```
+
 #### 箭头函数与普通函数的区别？
 
 - 函数体内的`this`对象，就是定义时所在的对象，而不是使用时所在的对象
