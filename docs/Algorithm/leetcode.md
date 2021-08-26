@@ -246,6 +246,14 @@ function findSmallSeq(nums, k) {
 
 [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
 
+[3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+
+[713. 乘积小于K的子数组](https://leetcode-cn.com/problems/subarray-product-less-than-k/)
+
+[567. 字符串的排列](https://leetcode-cn.com/problems/permutation-in-string/)
+
+[76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
+
 
 #### 链表
 

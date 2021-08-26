@@ -413,3 +413,230 @@ render() {
 - 将Reconciliation 阶段进行任务拆分（commit无法拆分）
 - DOM需要渲染时暂停，空闲时恢复
 - window.requestIdleCallback
+
+#### React hooks
+
+**函数组件的特点**
+
+- 没有生命周期
+- 没有组件实例
+- 没有state和setState,只能接收props
+
+**class组件的问题**
+
+- 大型组件很难拆分和重构，很难测试（即class不易拆分）
+- 相同业务逻辑，分散到各个方法中，逻辑混乱
+- 复用逻辑变的复杂，如Mixins、HOC、Render Prop
+
+**state hook**
+
+> 让函数组件实现state 和 setState
+
+- 默认函数组件没有state
+- 函数组件是一个纯函数，执行完即销毁，无法存储state
+- 需要state hook， 即把state功能 钩 到纯函数中
+- useState(0)传入初始值，返回数组 [state, setState]
+- 通过state获取值
+- 通过setState(1)修改值
+
+**effect hook**
+
+> 让函数组件模拟生命周期
+
+- 默认函数组件没有生命周期
+
+- 函数组件是一个纯函数，执行完即销毁，自己无法实现生命周期
+
+  ```
+  useEffect(() => {
+  	console.log('ok')
+  }, []) // didMount
+  
+  useEffect(() => {
+  	console.log('更新了')
+  }, [count, name])  // didUpdate  依赖count和name
+  
+  useEffect(() => {
+  	let timer = setInterval(() => {
+  		console.log(Date.now())
+  	}, 1000)
+  	
+  	// 返回一个函数
+  	// 模拟WillUnMount
+  	/*
+  		此处并不完全等同于 WillUnMount
+  		props发生变化 即更新 也会执行结束监听
+  		准确的说： 返回的函数，会在下一次 effect执行之前 被执行
+  	*/
+  	return () => {
+  		clearInterval(timer)
+  	}
+  }, [])
+  ```
+
+- useEffect让纯函数有了副作用
+  - 默认情况下，执行纯函数，输入参数，返回结果，无副作用
+  - 所谓副作用，就是对函数之外造成影响，如设置全局定时任务
+
+**自定义Hook**
+
+```
+function useAxios(url) {
+	const [loading, setLoading] = useState(false)
+	const [data, setData] = useState()
+	const [error, setError] = useState()
+	
+	useEffect(() => {
+		setLoading(true)
+		axios.get(url)
+		.then(res => setData(res))
+		.catch(err => setError(err))
+		.finally(() => setLoading(false))
+	}, [url])
+	
+	return [loading, data, error]
+}
+
+function App() {
+	const url = 'xx'
+	
+	const [loading, data, error] = useAxios(url)
+	if(loading) return <div>loading...</div>
+	return error ? 
+	<div>{JSON.stringify(error)}</div> : 
+	<div>{JSON.stringify(data)}</div>
+}
+export default App
+```
+
+- Hooks使用规范
+
+  > 只能用于react函数组件和自定义Hook中，其他地方不可以
+  >
+  > 只能用于顶层代码，不能用于循环、判断中使用Hooks
+  >
+  > 无论是render还是re-render, Hooks调用顺序必须一致
+  >
+  > 如果Hooks出现在循环、判断里，则无法保证顺序一致
+  >
+  > Hooks严重依赖于调用顺序
+
+- hooks逻辑复用的好处
+
+  > 完全符合Hooks原有规则， 没有其他要求，易于理解记忆
+  >
+  > 变量作用域明确
+  >
+  > 不会产生组件嵌套
+
+**其他 hooks**
+
+- useRef
+
+  ```js
+  function UseRef() {
+  	const btnRef = useRef(null)
+  	
+  	useEffect(() => {
+  		console.log(btnRef.current)
+  	}, [])
+  	
+  	return <div ref={btnRef}>click</div>
+  }
+  
+  export default UseRef
+  ```
+
+- useContext
+
+- useMemo
+
+  > 当父组件进行更新，而子需要的props的值没有更改，但还是会进行更新。
+
+  - 首先子组件使用memo包裹
+
+  - 父组件中传递给子组件的值用useMemo缓存
+
+    ```js
+    const userInfo = useMemo(() => {
+    	return {name, age: 21}
+    }, [name])
+    
+    return <div>
+    	<Child userInfo={userInfo}></Child>
+    </div>
+    ```
+
+- useCallback
+
+  > useCallback 缓存函数
+
+  ```
+  const userInfo = useMemo(() => {
+  	return {name, age: 21}
+  }, [name])
+  
+  const onChange = useCallback((e) => {
+  	console.log(e,target.value)
+  })
+  return <div>
+  	<Child userInfo={userInfo} onChange={onChange}></Child>
+  </div>
+  ```
+
+- useReducer
+
+  ```
+  const initialState = {
+  	count: 0
+  }
+  
+  const reducer = (state, action) => {
+  	switch(action.type) {
+  	 case 'increment':
+  	 	return {count: state.count + 1}
+  	 case 'decrement':
+      return {count: state.count - 1}
+  	}
+  }
+  
+  function App() {
+  	const [state, dispatch] = useReducer(reducer, initialState)
+  	
+  	return <div>
+  		count: {state.count}
+  		<button onClick={() => dispatch({type: 'increment'})}></button>
+  	</div>
+  }
+  ```
+
+  - useReducer是单个组件状态管理， 组件通信还需要props
+  - redux是全局的状态管理， 多组件共享数据
+  - useReducer是useState的代替方案， 用于state复杂变化
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
