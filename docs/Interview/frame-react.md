@@ -614,7 +614,28 @@ export default App
   - redux是全局的状态管理， 多组件共享数据
   - useReducer是useState的代替方案， 用于state复杂变化
 
+**React Hooks注意事项**
 
+- useState初始化值，只有第一次有效
+
+- useEffect内部不能修改state
+
+  ```js
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+  	const timer = setInterval(() => {
+  		setCount(count + 1)
+  	}, 1000)
+  	
+  	return () => clearInterval(timer)
+  }, [])
+  
+  return <div>{count}</div> // 这里的count将一直是1
+  ```
+
+- useEffect可能出现死循环
+
+  > useEffect 依赖的值是一个引用类型
 
   
 
