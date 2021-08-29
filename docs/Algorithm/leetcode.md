@@ -254,6 +254,24 @@ function findSmallSeq(nums, k) {
 
 [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
 
+[392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
+
+[443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
+
+[42. 接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
+
+#### 回溯
+
+[17. 电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
+
+[78. 子集](https://leetcode-cn.com/problems/subsets/)
+
+[46. 全排列](https://leetcode-cn.com/problems/permutations/)
+
+[90. 子集 II](https://leetcode-cn.com/problems/subsets-ii/)
+
+[47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
+
 
 #### 链表
 
