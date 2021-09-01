@@ -124,6 +124,58 @@ Date.now() - performance.timing.navigationStart
 - 定时器和dom引用
 - 闭包
 
+```js
+// sizeof
+const seen = new WeakSet()
+
+function sizeOfObject(object) {
+	if(!object) {
+		return 0
+	}
+	let bytes = 0
+	const props = Object.keys(object)
+	for(let i =0;i<props.length;i++) {
+		const key = props[i]
+		bytes+=calculator(key)
+		
+		if(typeof object[key] == 'object' && object[key]!==null) {
+			if(seen.has(object[key])) {
+				continue
+			}
+			seen.add(object[key])
+		}
+		bytes +=calculator(object[key])
+	}
+	return bytes
+}
+
+function calculator(object) {
+	const type = typeof object
+	switch(type) {
+		case 'string':
+			return object.length * 2
+			break;
+	  case 'boolean':
+    	return 4
+    	break
+    case 'number':
+     return 8
+     break;
+    case 'object':
+    	if(Array.isArray(object)) {
+    			return object.map(calculator).reduce((res, current) => res + current, 0)
+    	}else{
+    		return sizeOfObject(object)
+    	}
+    	break
+    default: 
+      return 0		
+	}
+}
+```
+
+
+
 
 
 

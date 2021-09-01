@@ -396,9 +396,13 @@ class Solution {
 
 #### 动态规划
 
+[152. 乘积最大子数组](https://leetcode-cn.com/problems/maximum-product-subarray/)
+
+[64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
 
 
-#### 堆
+
+####  堆
 
 [剑指 Offer 40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
 
@@ -454,7 +458,9 @@ class Solution {
 
 [148. 排序链表](https://leetcode-cn.com/problems/sort-list/)
 
+[104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)
 
+[543. 二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree/)
 
 #### 排序
 
@@ -469,6 +475,8 @@ class Solution {
 [75. 颜色分类](https://leetcode-cn.com/problems/sort-colors/)
 
 [136. 只出现一次的数字](https://leetcode-cn.com/problems/single-number/)
+
+[240. 搜索二维矩阵 II](https://leetcode-cn.com/problems/search-a-2d-matrix-ii/)
 
 **第K小的数**
 

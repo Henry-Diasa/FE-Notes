@@ -23,3 +23,36 @@ p {
 }
 ```
 
+#### 自适应正方形
+
+```css
+<div class="placeholder"></div>
+
+// 方案1
+.placeholder {
+	width: 100%
+	height: 100vw
+}
+
+// 方案2
+.placeholder{
+  height: 0
+	width: 100%
+	padding-bottom: 100%
+}
+
+// 方案3
+
+.placeholder {
+  width: 100%;
+  overflow: hidden
+}
+
+.placeholder:after {
+  content: '';
+  display: block;
+  margin-top: 100%; /* margin 百分比相对父元素宽度计算 */
+}
+
+```
+
