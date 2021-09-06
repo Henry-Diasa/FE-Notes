@@ -400,7 +400,13 @@ class Solution {
 
 [64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
 
+[5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
 
+[10. 正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
+
+[322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
+
+[198. 打家劫舍](https://leetcode-cn.com/problems/house-robber/)
 
 ####  堆
 
@@ -838,4 +844,10 @@ function merge(arr, left, right, temp) {
 [66. 加一](https://leetcode-cn.com/problems/plus-one/)
 
 [189. 旋转数组](https://leetcode-cn.com/problems/rotate-array/)
+
+
+
+#### 热门题目
+
+> 1、2、3、4、**5**、**10**、11、15、17、19、21、22、23、**31**、**32**、**34**、**39**
 

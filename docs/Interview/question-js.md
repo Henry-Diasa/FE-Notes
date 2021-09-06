@@ -106,6 +106,116 @@
 
 > 略
 
+#### 继承存在的问题
+
+> 假如现在有不同品牌的车，每辆车都有drive、music、addOil这三个方法。
+
+```
+class Car{
+  constructor(id) {
+    this.id = id;
+  }
+  drive(){
+    console.log("wuwuwu!");
+  }
+  music(){
+    console.log("lalala!")
+  }
+  addOil(){
+    console.log("哦哟！")
+  }
+}
+class otherCar extends Car{}
+```
+
+现在可以实现车的功能，并且以此去扩展不同的车。
+
+但是问题来了，新能源汽车也是车，但是它并不需要addOil(加油)。
+
+如果让新能源汽车的类继承Car的话，也是有问题的，俗称"大猩猩和香蕉"的问题。大猩猩手里有香蕉，但是我现在明明只需要香蕉，却拿到了一只大猩猩。也就是说加油这个方法，我现在是不需要的，但是由于继承的原因，也给到子类了。
+
+**继承的最大问题在于：无法决定继承哪些属性，所有属性都得继承。**
+
+可以再创建一个父类啊，把加油的方法给去掉，但是这也是有问题的，一方面父类是无法描述所有子类的细节情况的，为了不同的子类特性去增加不同的父类，代码势必会大量重复，另一方面一旦子类有所变动，父类也要进行相应的更新，代码的耦合性太高，维护性不好。
+
+**那如何来解决继承的诸多问题呢？**
+
+> 用组合，这也是当今编程语法发展的趋势，比如golang完全采用的是面向组合的设计方式。
+
+顾名思义，面向组合就是先设计一系列零件，然后将这些零件进行拼装，来形成不同的实例或者类。
+
+```
+function drive(){
+  console.log("wuwuwu!");
+}
+function music(){
+  console.log("lalala!")
+}
+function addOil(){
+  console.log("哦哟！")
+}
+
+let car = compose(drive, music, addOil);
+let newEnergyCar = compose(drive, music);
+```
+
+> 代码干净，复用性也很好。这就是面向组合的设计方式
+
+#### 非匿名立即执行函数
+
+```
+var foo = 1
+(function foo() {
+    foo = 10
+    console.log(foo)
+}()) // -> ƒ foo() { foo = 10 ; console.log(foo) }
+```
+
+> 因为当 `JS` 解释器在遇到非匿名的立即执行函数时，会创建一个辅助的特定对象，然后将函数名称作为这个对象的属性，因此函数内部才可以访问到 `foo`，但是这个值又是只读的，所以对它的赋值并不生效，所以打印的结果还是这个函数，并且外部的值也没有发生更改。
+
+#### 数组乱序
+
+```
+var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+arr.sort(function() {
+	retutn Math.random() - 0.5
+})
+
+
+/*
+	洗牌算法
+	1.倒序循环这个数组
+  2.取范围从1到n的随机数k
+  3.k与n交换
+  4.直到循环至数组的首个元素
+*/
+Array.prototype.shuffle = function() {
+    var input = this;
+
+    for (var i = input.length-1; i >=0; i--) {
+
+        var randomIndex = Math.floor(Math.random()*(i+1));
+        var itemAtIndex = input[randomIndex];
+
+        input[randomIndex] = input[i];
+        input[i] = itemAtIndex;
+    }
+    return input;
+}
+```
+
+#### JS实现对上传图片的压缩
+
+> 答：读取用户上传的 File 对象，读写到画布（canvas）上，利用 Canvas 的 API 进行压缩，完成压缩之后再转成 `File（Blob）` 对象，上传到远程图片服务器；不过有时候我们也需要将一个 `base64` 字符串压缩之后再变为 `base64` 字符串传入到远程数据库或者再转成 `File（Blob）` 对象。 [链接](https://www.jianshu.com/p/f46195810c3b)
+
+#### 跨标签页通讯
+
+- 设置同域下共享的`localStorage`与监听`window.onstorage`
+  - 重复写入相同的值无法触发
+  - 会受到浏览器隐身模式等的限制
+- 设置共享`cookie`与不断轮询脏检查`setInterval`
+
 #### this
 
 > 略
@@ -215,6 +325,15 @@ function myNew() {
 > 脱离DOM的引用
 >
 > 闭包
+
+#### 缩短白屏时长
+
+- 通过内联 JavaScript、内联 CSS 来移除这两种类型的文件下载，这样获取到 HTML 文件之后就可以直接开始渲染流程了。
+- 但并不是所有的场合都适合内联，那么还可以尽量减少文件大小，比如通过 webpack 等工具移除一些不必要的注释，并压缩 JavaScript 文件。
+- 还可以将一些不需要在解析 HTML 阶段使用的 JavaScript 标记上 sync 或者 defer
+- 对于大的 CSS 文件，可以通过媒体查询属性，将其拆分为多个不同用途的 CSS 文件，这样只有在特定的场景下才会加载特定的 CSS 文件。
+
+
 
 ### 手写题
 
